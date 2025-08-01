@@ -14,6 +14,8 @@
 
 # %%
 from brian2 import * 
+from src.cell import get_neuron_group 
+
 # %matplotlib inline
 
 # %% [markdown]
@@ -22,43 +24,32 @@ from brian2 import *
 # %%
 start_scope()
 
-#Parameters 
-N = 1 
-tau = 10*ms #membrane time constant
-vr = -70*mV #reset potential after spike 
-vt0 = -50*mV #baseline threshold 
-delta_vt0 = 5*mV #adaptation after spike 
-tau_t = 100*ms #threshold recovery time constant 
-sigma = 0.5*(vt0 - vr) #noise amplitude 
-v_drive = 2*(vt0 - vr) #constant drive, bias current
-duration = 100*ms
+params = {
+    'Gl':10, # nS, leak conductance ( 1 / membrane resistance)
+    'Cm':200, #pF, membrane capacitance
+    'El': -70, #mV, leak reversal potential / rest potential
+    'Ee': 0, #mV, excitatory reversal potential 
+    'Ei': -80, #mV, excitatory reversal potential 
+    'Vtresh':-50, #mV, spiking threshold
+    'Trefrac':5, #ms, refractory period
+            }
 
-#Equations 
-#basic: dv/dt=(1-v)/tau : 1 (unless refractory)
-#LIF: dv/dt = (v_drive + vr - v)/tau + sigma*xi*tau**-0.5 : volt
-                                 #dvt/dt = (vt0 - vt)/tau_t : volt
-#HH: 
-eqs = ''' 
-dv/dt = (v_drive + vr - v)/tau + sigma*xi*tau**-0.5 : volt
-dvt/dt = (vt0 - vt)/tau_t : volt
-'''
-reset = '''
-v = vr
-vt += delta_vt0
-'''
+G = get_neuron_group(params)
+M = StateMonitor(G, ['V','I0'], record=0)
 
-#Monitoring
-G = NeuronGroup(N, eqs,  threshold='v > vt', reset=reset, refractory=5*ms, method='euler')
-M = StateMonitor(G, 'v', record=0)
-S = SpikeMonitor(G)
-spike_counts = S.count 
-G.v = 'rand() * (vt0 - vr) + vr' #randomized initial MP
-G.vt = vt0 #baseline threshold 
-run(duration)
+G.V = -70*mV 
+G.I0 = 0*pA
+run(0.1*second)
+G.I0 = 300*pA
+run(0.2*second)
+G.I0 = 0*pA
+run(0.1*second)
+plot(M.V[0]/mV)
 
+# %%
 #Plotting 
-print('Spike count =', S.count[0])
-plot(M.t/ms, M.v[0])
+for v in Vs:
+    plot(M.t/ms, v)
 xlabel('Time (ms)')
 ylabel('v');
 
