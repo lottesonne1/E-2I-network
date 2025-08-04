@@ -8,6 +8,7 @@ params = {
     'Ee': 0, #mV, excitatory reversal potential 
     'Ei': -80, #mV, excitatory reversal potential 
     'Vtresh':-50, #mV, spiking threshold
+    'Vreset':-60, #mV, post-spike reset level
     'Trefrac':5, #ms, refractory period
     # ----------------------------- #
     # ---- Synaptic Parameters ---- #

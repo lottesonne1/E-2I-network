@@ -18,7 +18,7 @@ def get_neuron_group(params):
 
     return NeuronGroup(1, eqs, 
                     threshold='V > %(Vtresh)f*mV' % params, 
-                    reset='V=%(El)f * mV ' % params, 
+                    reset='V=%(Vreset)f * mV ' % params, 
                     refractory=params['Trefrac']*1e-3*second, 
                     method='euler')
 
@@ -31,6 +31,7 @@ if __name__=='__main__':
           'Ee': 0, #mV, excitatory reversal potential 
           'Ei': -80, #mV, excitatory reversal potential 
           'Vtresh':-50, #mV, spiking threshold
+          'Vreset':-70, #mV, post-spike reset level
           'Trefrac':5, #ms, refractory period
                  }
 
@@ -48,5 +49,7 @@ if __name__=='__main__':
      network.run(0.2*second)
      cell.I0 = 0*pA
      network.run(0.1*second)
-     plot(M.V[0]/mV)
+
+     from .plot import plot_Vm
+     plot_Vm(M.V[0]/mV, params)
      show()
