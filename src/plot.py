@@ -3,6 +3,8 @@ import numpy as np
 
 def plot_Vm(V, params, 
             ax=None,
+            color='k',
+            linestyle='-',
             peak=0):
 
     Vm = V+0.*V
@@ -17,4 +19,7 @@ def plot_Vm(V, params,
 
     Vm[ispikes] = peak
 
-    return ax.plot(np.arange(len(Vm))*params['dt'], Vm)
+    return ax.plot(np.arange(len(Vm))*params['dt'], 
+                   Vm, 
+                   linestyle,
+                   color=color)

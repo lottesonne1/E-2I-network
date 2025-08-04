@@ -119,10 +119,14 @@ for n in range(0, 10):
     evoked_n = Vm_nevents - params['El']
     nevoked_list.append(evoked_n)
 
+# %% 
+fig, AX = plt.subplots(1, 2, figsize=(7,3))
+
 for n, evoked_n in enumerate(nevoked_list, start=1):
     expected = n * evoked_1
-    plot(evoked_n, label=f'{n} events')
-    plot(expected, '--', label=f'{n}×1 event')
+    #plot_Vm(evoked_n, params)
+    #plot_Vm(expected)
+    #-', label=f'{n}×1 event')
 
 xlabel('time (steps)')
 ylabel('Evoked $V_m$ (mV)')
