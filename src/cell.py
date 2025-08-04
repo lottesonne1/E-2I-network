@@ -1,4 +1,6 @@
 from brian2 import *
+from .synapses import get_synapses_eqs
+
 
 def get_membrane_equation(params):
 
@@ -22,6 +24,62 @@ def get_neuron_group(params):
                     refractory=params['Trefrac']*1e-3*second, 
                     method='euler')
 
+def single_cell_simulation(params, 
+                           exc_events,
+                           inh_events,
+                           tstop=1):
+
+    network = Network(collect())
+
+    # create cell
+    cell = get_neuron_group(params)
+    network.add(cell)
+
+    # get synaptic equations
+    EXC_SYNAPSES_EQUATIONS, ON_EXC_EVENT,\
+            INH_SYNAPSES_EQUATIONS, ON_INH_EVENT =\
+                    get_synapses_eqs(params)
+
+
+    # create synaptic events
+    # - excitatory:
+    exc_spikes = SpikeGeneratorGroup(1,
+                                     np.zeros(len(exc_events), dtype=int),
+                                     np.array(exc_events)*second)
+    network.add(exc_spikes)
+    # - inhibitory:
+    inh_spikes = SpikeGeneratorGroup(1,
+                                     np.zeros(len(inh_events), dtype=int),
+                                     np.array(inh_events)*second)
+    network.add(inh_spikes)
+
+    # create synapses
+    # - excitatory:
+    exc_synapses = Synapses(exc_spikes, cell,
+                            model=EXC_SYNAPSES_EQUATIONS.format(**params),
+                            on_pre=ON_EXC_EVENT.format(**params),
+                            method='exponential_euler')
+    exc_synapses.connect(i=0, j=0)
+    network.add(exc_synapses)
+    # - inhibitory:
+    inh_synapses = Synapses(inh_spikes, cell,
+                            model=INH_SYNAPSES_EQUATIONS.format(**params),
+                            on_pre=ON_INH_EVENT.format(**params),
+                            method='exponential_euler')
+    inh_synapses.connect(i=0, j=0)
+    network.add(inh_synapses)
+
+    # record membrane potential
+    M = StateMonitor(cell, ['V'], record=0)
+    network.add(M)
+
+    # initialize and run
+    cell.V = params['El']*mV 
+    network.run(tstop*second)
+
+    return M.V[0]/mV
+
+
 if __name__=='__main__':
 
      params = {
@@ -42,7 +100,7 @@ if __name__=='__main__':
      network.add(cell)
      M = StateMonitor(cell, ['V','I0'], record=0)
      network.add(M)
-     cell.V = -70*mV 
+     cell.V = params['El']*mV 
      cell.I0 = 0*pA
      network.run(0.1*second)
      cell.I0 = 300*pA
