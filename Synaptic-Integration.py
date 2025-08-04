@@ -24,7 +24,7 @@ from src.plot import plot_Vm
 
 
 # %% [markdown]
-# #Excitatory Synapses
+# #Excitatory Events
 
 # %%
 exc_events = 0.2+np.arange(20)*0.025
@@ -39,6 +39,9 @@ Vm = single_cell_simulation(params,
 plot_Vm(Vm, params)
 show()
 
+# %% [markdown]
+# #Inhibitory Events
+
 # %%
 inh_events = 0.2+np.arange(20)*0.025
 print(inh_events)
@@ -49,5 +52,30 @@ Vm = single_cell_simulation(params,
                             tstop=1)
 
 plot_Vm(Vm, params)
+show()
+
+# %% [markdown]
+# #Mixed Events
+
+# %%
+exc_events = np.cumsum(\
+        np.random.exponential(0.1, size=8))
+print(exc_events)
+inh_events = np.cumsum(\
+        np.random.exponential(0.1, size=8))
+print(inh_events)
+
+Vm = single_cell_simulation(params,
+                            exc_events,
+                            inh_events,
+                            tstop=1)
+
+plot_Vm(Vm, params)
+# adding events on plot
+plot(exc_events, -71+0*exc_events, 'go')
+plot(inh_events, -71+0*inh_events, 'ro')
+xlim([0,1])
+xlabel('time (s)')
+ylabel('$V_m$ (mV)')
 show()
 

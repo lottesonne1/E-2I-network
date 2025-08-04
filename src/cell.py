@@ -29,6 +29,8 @@ def single_cell_simulation(params,
                            inh_events,
                            tstop=1):
 
+    defaultclock.dt = params['dt']*second
+
     network = Network(collect())
 
     # create cell
