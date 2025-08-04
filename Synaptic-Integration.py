@@ -81,3 +81,22 @@ xlabel('time (s)')
 ylabel('$V_m$ (mV)')
 show()
 
+# %% [markdown]
+# #Mixed Events
+
+# %%
+
+# simulation 1 event
+exc_events = [0.1]
+Vm_1event
+
+# simulation 2 events
+dt=1e-4 # seconds
+exc_events = [0.1, 0.1+dt]
+Vm_2events = ...
+
+
+evoked = Vm-params['El']
+evoked_2events vs 2*evoked_1event
+
+
