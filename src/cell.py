@@ -34,14 +34,19 @@ if __name__=='__main__':
           'Trefrac':5, #ms, refractory period
                  }
 
-     G = get_neuron_group(params)
-     M = StateMonitor(G, ['V','I0'], record=0)
-     G.V = -70*mV 
-     G.I0 = 0*pA
-     run(0.1*second)
-     G.I0 = 300*pA
-     run(0.2*second)
-     G.I0 = 0*pA
-     run(0.1*second)
+     # initialize brian2 "network"
+     network = Network(collect())
+
+     cell = get_neuron_group(params)
+     network.add(cell)
+     M = StateMonitor(cell, ['V','I0'], record=0)
+     network.add(M)
+     cell.V = -70*mV 
+     cell.I0 = 0*pA
+     network.run(0.1*second)
+     cell.I0 = 300*pA
+     network.run(0.2*second)
+     cell.I0 = 0*pA
+     network.run(0.1*second)
      plot(M.V[0]/mV)
      show()
