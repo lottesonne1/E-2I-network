@@ -121,15 +121,29 @@ for n in range(0, 10):
 
 # %% 
 fig, AX = plt.subplots(1, 2, figsize=(7,3))
+inset = fig.add_axes([0.93, 0.2, 0.04, 0.6])
+cmap = mpl.cm.viridis_r
+bounds = np.arange(len(nevoked_list)+1)
+norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
 
+cb = fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap),
+             cax=inset, orientation='vertical',
+             ticks=[],
+             label="n synapses")
+#cb.set_ticks(ticks=np.arange(len(nevoked_list))+1.5,
+#             labels=[str(i) for i in 1+np.arange(len(nevoked_list))])
 for n, evoked_n in enumerate(nevoked_list, start=1):
     expected = n * evoked_1
-    #plot_Vm(evoked_n, params)
-    #plot_Vm(expected)
-    #-', label=f'{n}×1 event')
+    plot_Vm(expected, params, ax=AX[0],
+            color=cmap(n/(len(nevoked_list))))
+    plot_Vm(evoked_n, params, ax=AX[1],
+            color=cmap(n/(len(nevoked_list))))
 
-xlabel('time (steps)')
-ylabel('Evoked $V_m$ (mV)')
+for ax in AX:
+    ax.set_ylim([-1,60])
+    ax.set_xlim([0, 0.4])
+    ax.set_xlabel('time (s)')
+AX[0].set_ylabel('depolarization (mV)')
 legend()
 show()
 
