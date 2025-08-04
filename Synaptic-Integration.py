@@ -27,6 +27,8 @@ from src.plot import plot_Vm
 # #Excitatory Events
 
 # %%
+from src.default_params import params
+params['Vthre'] = -53 
 exc_events = 0.2+np.arange(20)*0.025
 print(exc_events)
 
