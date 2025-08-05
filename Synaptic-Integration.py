@@ -63,20 +63,14 @@ print(exc_events)
 inh_events = np.cumsum(\
         np.random.exponential(0.1, size=8))
 print(inh_events)
-
 Vm = single_cell_simulation(params,
                             exc_events,
                             inh_events,
                             tstop=1)
-
-plot_Vm(Vm, params)
 # adding events on plot
 plot(exc_events, -71+0*exc_events, 'go')
 plot(inh_events, -71+0*inh_events, 'ro')
 xlim([0,1])
-xlabel('time (s)')
-ylabel('$V_m$ (mV)')
-show()
 
 # %% [markdown]
 # #Simulation 1 excitatory event
@@ -87,12 +81,9 @@ Vm_1event = single_cell_simulation(params,
                             [],
                             tstop=1)
 evoked_1 = Vm_1event - params['El']
-plot_Vm(evoked_1, params)
-show()
 
 # %% [markdown]
 # #Simulation 2 excitatory events
-# %%
 dt=1e-4 # seconds
 exc_events = [0.1, 0.1+dt] #events start at 100 ms 
 Vm_2events = single_cell_simulation(params,
@@ -101,9 +92,6 @@ Vm_2events = single_cell_simulation(params,
                             tstop=1)
 
 evoked_2 = Vm_2events - params['El']
-
-plot_Vm(evoked_2, params)
-show()
 
 # %%
 #Loop for 10 excitatory events 
@@ -177,10 +165,6 @@ plt.show()
 #evoked_10events vs 10*evoked_1event
 plot(10 * evoked_1, '--', label='10 × (1 event)')
 plot(nevoked_list[9], label='10 simultaneous events')
-
 xlabel('Time (steps)')
 ylabel('Evoked $V_m$ (mV)')
-legend()
 show()
-
-# %%
