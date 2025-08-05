@@ -98,3 +98,4 @@ plt.ylabel('modelled depolarization (mV)')
 plt.title('PV-INs')
 plt.legend()
 plt.show()
+# %%
