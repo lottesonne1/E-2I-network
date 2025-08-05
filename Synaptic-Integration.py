@@ -148,6 +148,32 @@ legend()
 show()
 
 # %%
+#regression 
+evoked_1_ = np.array(evoked_1)
+peak_expected = []
+peak_actual = [] 
+
+for n in range(1, 11):
+    expected = np.max(n * evoked_1)
+    actual = np.max(nevoked_list[n-1])
+    
+    peak_expected.append(expected)
+    peak_actual.append(actual)
+
+# %%
+#regression plot 
+plt.figure()
+plt.plot(peak_expected, peak_actual, 'o-', label='Actual vs Expected')
+plt.plot(peak_expected, peak_expected, 'k--', label='Perfect Linearity')
+
+plt.xlabel('Expected peak $V_m$ (n × 1 event) [mV]')
+plt.ylabel('Actual peak $V_m$ (n events) [mV]')
+plt.title('Synaptic Summation: Actual vs Expected')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# %%
 #evoked_10events vs 10*evoked_1event
 plot(10 * evoked_1, '--', label='10 × (1 event)')
 plot(nevoked_list[9], label='10 simultaneous events')
