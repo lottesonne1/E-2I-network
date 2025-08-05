@@ -112,8 +112,8 @@ if __name__=='__main__':
           'RmS':150, # M Ohm, membrane resistance Soma
           'RmD':300, # M Ohm, membrane resistance Dendrite
           'Ri':100, # M Ohm
-          'CmD':300, #pF, membrane capacitance
-          'CmS':300, #pF, membrane capacitance
+          'CmD':300, #pF, membrane capacitance Dendrite
+          'CmS':300, #pF, membrane capacitance Soma
           'El': -70, #mV, leak reversal potential / rest potential
           'Ee': 0, #mV, excitatory reversal potential 
           'Ei': -80, #mV, excitatory reversal potential 

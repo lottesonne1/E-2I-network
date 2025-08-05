@@ -2,6 +2,7 @@ params = {
     # ----------------------------- #
     # ---- Cellular Parameters ---- #
     # ----------------------------- #
+    #  === -> single-compartment 
     'Gl':10, # [nS], leak conductance ( 1 / membrane resistance)
     'Cm':200, # [pF], membrane capacitance
     'El': -70, # [mV], leak reversal potential / rest potential
@@ -10,6 +11,12 @@ params = {
     'Vtresh':-50, # [mV], spiking threshold
     'Vreset':-60, # [mV], post-spike reset level
     'Trefrac':5, # [ms], refractory period
+    #  === -> two-compartments
+    'RmS':150, # M Ohm, membrane resistance Soma
+    'RmD':300, # M Ohm, membrane resistance Dendrite
+    'Ri':100, # M Ohm, intra-compartment resistance
+    'CmD':300, #pF, membrane capacitance Dendrite
+    'CmS':300, #pF, membrane capacitance Soma
     # ----------------------------- #
     # ---- Synaptic Parameters ---- #
     # ----------------------------- #
