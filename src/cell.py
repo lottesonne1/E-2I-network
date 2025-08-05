@@ -49,6 +49,7 @@ def get_neuron_group(params,
 def single_cell_simulation(params, 
                            exc_events,
                            inh_events,
+                           model='single-compartement',
                            tstop=1):
 
     defaultclock.dt = params['dt']*second
@@ -56,7 +57,8 @@ def single_cell_simulation(params,
     network = Network(collect())
 
     # create cell
-    cell = get_neuron_group(params)
+    cell = get_neuron_group(params,
+                            model=model)
     network.add(cell)
 
     # get synaptic equations
