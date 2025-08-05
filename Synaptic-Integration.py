@@ -148,7 +148,7 @@ legend()
 show()
 
 # %%
-#regression 
+# comparison  
 evoked_1_ = np.array(evoked_1)
 peak_expected = []
 peak_actual = [] 
@@ -161,16 +161,15 @@ for n in range(1, 11):
     peak_actual.append(actual)
 
 # %%
-#regression plot 
+#comparison plot 
 plt.figure()
 plt.plot(peak_expected, peak_actual, 'o-', label='Actual vs Expected')
 plt.plot(peak_expected, peak_expected, 'k--', label='Perfect Linearity')
 
-plt.xlabel('Expected peak $V_m$ (n × 1 event) [mV]')
-plt.ylabel('Actual peak $V_m$ (n events) [mV]')
-plt.title('Synaptic Summation: Actual vs Expected')
+plt.xlabel('expected depolarization (mV)')
+plt.ylabel('modelled depolarization (mV)')
+plt.title('SST-INs')
 plt.legend()
-plt.grid(True)
 plt.show()
 
 # %%
@@ -182,35 +181,5 @@ xlabel('Time (steps)')
 ylabel('Evoked $V_m$ (mV)')
 legend()
 show()
-# %%
-#evoked_2events vs 2*evoked_1event
-plot(evoked_1, label='1 event')
-plot(evoked_2, label='2 events')
-plot(2 * evoked_1, '--', label='2 × (1 event)', alpha=0.6)
-legend()
-xlabel('time')
-ylabel(mV)
-show()
-
-# %% [markdown]
-# #Multiple mixed Events
-
-# %%
-exc_events = [0.1]     
-inh_events = [0.1]
-Vm_ei = single_cell_simulation(params,
-                            exc_events,
-                            inh_events,
-                            tstop=1)
-
-plot_Vm(Vm_ei, params)
-plot(exc_events, [-71 for _ in exc_events], 'go')
-plot(inh_events, [-71 for _ in inh_events], 'ro')
-xlim([0,1])
-xlabel('time (s)')
-ylabel('$V_m$ (mV)')
-show()
-print(exc_events)
-print(inh_events)
 
 # %%
