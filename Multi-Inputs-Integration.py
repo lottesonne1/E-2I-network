@@ -26,6 +26,7 @@ from src.plot import plot_Vm
 # 1 excitatory event 
 params['Vtresh'] = 0
 params['qNMDA'] = 0
+params['model'] = 'two-compartments'
 exc_events = [0.1]
 Vm_1event = single_cell_simulation(params,
                             exc_events,

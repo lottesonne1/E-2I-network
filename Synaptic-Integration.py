@@ -28,6 +28,7 @@ from src.plot import plot_Vm
 
 # %%
 params['Vthre'] = -53 
+params['model'] = 'two-compartments'
 exc_events = 0.2+np.arange(20)*0.025 # multiple  equally spaced timed events 
 print(exc_events)
 
