@@ -27,15 +27,16 @@ from src.plot import plot_Vm
 # #Excitatory Events
 
 # %%
-exc_events = 0.2+np.arange(20)*0.025 # multiple  equally spaced timed events 
-print(exc_events)
+exc_events = 0.2 + np.arange(20) * 0.025  # 20 equally spaced events
 
-Vm = single_cell_simulation(params,
-                            exc_events,
-                            [],
-                            tstop=1)
-
-plot_Vm(Vm, params)
+Vm_dict = single_cell_simulation(params,
+                                 exc_events,
+                                 [],
+                                 model='two-compartments',
+                                 tstop=1)
+plot_Vm(Vm_dict['Vm_soma'], params) #soma
+if Vm_dict['Vm_dend'] is not None: #dendrite
+   plot_Vm(Vm_dict['Vm_dend'], params, color='r')
 show()
 
 # %% [markdown]
@@ -73,41 +74,48 @@ xlim([0,1])
 # %% [markdown]
 # #Simulation 1 excitatory event
 # %%
-params['Vtresh']=0 
-exc_events = [0.1] # single event at 100 ms
-Vm_1event = single_cell_simulation(params,
-                            exc_events,
-                            [],
-                            model='two-compartements',
-                            tstop=1)
-evoked_1 = Vm_1event - params['El']
-plot_Vm(Vm_1event, params)
-show()
+exc_events = [0.1] 
+Vm_1event_dic = single_cell_simulation(params,
+                                       exc_events,
+                                       [],
+                                       model='two-compartments',
+                                       #model='single-compartment',
+                                       tstop=1)
 
+evoked_1 = Vm_1event_dic['Vm_soma'] - params['El']
+plot_Vm(Vm_1event_dic['Vm_soma'], params)
+show()
 
 # %% [markdown]
 # #Simulation 2 excitatory events
-dt=1e-4 # seconds
-exc_events = [0.1, 0.1+dt] #events start at 100 ms 
-Vm_2events = single_cell_simulation(params,
-                            exc_events,
-                            [],
-                            tstop=1)
-evoked_2 = Vm_2events - params['El']
+dt = 1e-4  # seconds
+exc_events = [0.1, 0.1 + dt]  # events start at 100 ms
+
+Vm_2events_dict = single_cell_simulation(
+    params,
+    exc_events,
+    [],
+    model='two-compartments',
+    #model='single-compartment',
+    tstop=1
+)
+evoked_2 = Vm_2events_dict['Vm_soma'] - params['El']
+
+plot_Vm(Vm_2events_dict['Vm_soma'], params)
+show()
 
 # %%
 #Loop for 10 excitatory events 
-dt=1e-4  
+dt = 1e-4  
 nevoked_list = []
-
 for n in range(0, 10):
     exc_events = [0.1 + i * dt for i in range(n)]
-    Vm_nevents = single_cell_simulation(params, 
-                                exc_events, 
-                                [],
-                                model='two-compartements',
-                                tstop=1)
-    evoked_n = Vm_nevents - params['El']
+    Vm_nevents_dic = single_cell_simulation(params, 
+                                       exc_events, 
+                                       [],
+                                       model='two-compartments',
+                                       tstop=1)  
+    evoked_n = Vm_nevents_dic['Vm_soma'] - params['El'] 
     nevoked_list.append(evoked_n)
 
 # %% 
@@ -131,7 +139,7 @@ for n, evoked_n in enumerate(nevoked_list, start=1):
             color=cmap(n/(len(nevoked_list))))
 
 for ax in AX:
-    ax.set_ylim([-1,200])
+    ax.set_ylim([-1,60])
     ax.set_xlim([0, 0.4])
     ax.set_xlabel('time (s)')
 AX[0].set_ylabel('depolarization (mV)')

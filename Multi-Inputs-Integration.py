@@ -24,37 +24,37 @@ from src.plot import plot_Vm
 
 # %%
 # 1 excitatory event 
-params['Vtresh'] = 0
-params['qNMDA'] = 0
-
 exc_events = [0.1]
-resp = single_cell_simulation(params,
+Vm_dict = single_cell_simulation(params,
                               exc_events,
                              [],
                             #  model ='single-compartment',
                              model ='two-compartments',
                             tstop=1)
-evoked_1 = resp['Vm_soma'] - params['El']
-plot_Vm(resp['Vm_soma'], params) 
-if resp['Vm_dend'] is not None:
-    plot_Vm(resp['Vm_dend'], params, color='r', linestyle=':') 
+evoked_1 = Vm_dict['Vm_soma'] - params['El']
+plot_Vm(Vm_dict['Vm_soma'], params) 
+plot_Vm(Vm_dict['Vm_dend'], params, color='r') 
 print(np.max(evoked_1))
 show()
 
 # %%
 #Loop for 10 excitatory events 
-dt=1e-4  
+dt = 1e-4  
 nevoked_list = []
+
 for n in range(0, 10):
     exc_events = [0.1 + i * dt for i in range(n)]
-    Vm_nevents = single_cell_simulation(params, 
-                                exc_events, 
-                                [], 
-                                model='two-compartments',
-                                # model='single-compartment',
-                                tstop=1)
-    evoked_n = Vm_nevents - params['El']
+
+    Vm_dict = single_cell_simulation(params, 
+                                     exc_events, 
+                                     [], 
+                                     model='two-compartments',  
+                                     #model='single-compartment',
+                                     tstop=1)
+
+    evoked_n = Vm_dict['Vm_soma'] - params['El']
     nevoked_list.append(evoked_n)
+
 
 # %% 
 fig, AX = plt.subplots(1, 2, figsize=(7,3))
@@ -77,7 +77,7 @@ for n, evoked_n in enumerate(nevoked_list, start=1):
             color=cmap(n/(len(nevoked_list))))
 
 for ax in AX:
-    ax.set_ylim([-1,200])
+    ax.set_ylim([-1,60])
     ax.set_xlim([0, 0.4])
     ax.set_xlabel('time (s)')
 AX[0].set_ylabel('depolarization (mV)')
