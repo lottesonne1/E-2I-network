@@ -2,12 +2,12 @@ from brian2 import *
 from .synapses import get_synapses_eqs
 
 def get_neuron_group(params,
-                     model='single-compartement'):
+                     model='single-compartment'):
     
-    if model=='single-compartement':
+    if model=='single-compartment':
 
         eqs = """
-        dV/dt = ( %(Gl)f*nS * ( %(El)f*mV -V ) + I ) / ( %(Cm)f * pF ) : volt (unless refractory)
+        dV/dt = ( ( 1 / ( %(Rm)f*Mohm ) ) * ( %(El)f*mV -V ) + I ) / ( %(Cm)f * pF ) : volt (unless refractory)
         I = I0 + gE * ( %(Ee)f*mV -V ) + gI * ( %(Ei)f*mV -V ) : amp
         I0 : amp
         gE : siemens
@@ -20,7 +20,7 @@ def get_neuron_group(params,
                         refractory=params['Trefrac']*1e-3*second, 
                         method='euler')
 
-    elif model=='two-compartements':
+    elif model=='two-compartments':
 
         # soma eq
         RVs = '%(Ri)f*Mohm * %(El)f*mV + %(RmS)f*Mohm * V + %(RmS)f*Mohm * %(Ri)f*Mohm * I0' % params
@@ -49,7 +49,7 @@ def get_neuron_group(params,
 def single_cell_simulation(params, 
                            exc_events,
                            inh_events,
-                           model='single-compartement',
+                           model='single-compartment',
                            tstop=1):
 
     defaultclock.dt = params['dt']*second
@@ -59,6 +59,8 @@ def single_cell_simulation(params,
     # create cell
     cell = get_neuron_group(params,
                             model=model)
+    cell.I0 = 0*pA
+
     network.add(cell)
 
     # get synaptic equations
@@ -85,6 +87,7 @@ def single_cell_simulation(params,
                             model=EXC_SYNAPSES_EQUATIONS.format(**params),
                             on_pre=ON_EXC_EVENT.format(**params),
                             method='exponential_euler')
+    print(exc_events)
     exc_synapses.connect(i=0, j=0)
     network.add(exc_synapses)
     # - inhibitory:
@@ -95,16 +98,34 @@ def single_cell_simulation(params,
     inh_synapses.connect(i=0, j=0)
     network.add(inh_synapses)
 
-    # record membrane potential
-    M = StateMonitor(cell, ['V'], record=0)
-    network.add(M)
 
-    # initialize and run
-    cell.V = params['El']*mV 
-    network.run(tstop*second)
 
-    return M.V[0]/mV
+    if model=='single-compartment':
 
+        # record membrane potential
+        M = StateMonitor(cell, ['V'], record=0)
+        network.add(M)
+
+        # initialize and run
+        cell.V = params['El']*mV 
+        network.run(tstop*second)
+
+        return {'Vm_soma':M.V[0]/mV,
+                'Vm_dend':None}
+
+    elif model=='two-compartments':
+
+        # record membrane potential
+        M = StateMonitor(cell, ['Vs', 'V'], record=0)
+        network.add(M)
+
+        # initialize and run
+        cell.Vs = params['El']*mV 
+        cell.V = params['El']*mV 
+        network.run(tstop*second)
+
+        return {'Vm_soma':M.Vs[0]/mV,
+                'Vm_dend':M.V[0]/mV}
 
 if __name__=='__main__':
 
@@ -127,7 +148,7 @@ if __name__=='__main__':
      network = Network(collect())
 
      cell = get_neuron_group(params,
-                             model='two-compartements')
+                             model='two-compartments')
      network.add(cell)
      M = StateMonitor(cell, ['Vs','V'], record=0)
      network.add(M)

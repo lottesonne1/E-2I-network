@@ -26,16 +26,23 @@ from src.plot import plot_Vm
 # 1 excitatory event 
 params['Vtresh'] = 0
 params['qNMDA'] = 0
-params['RmS'] = 15
+params['Ri'] = 3 
+params['Rm'] = 100
+params['RmS'] = 200
+params['RmD'] = 200
+params['CmS'] = 50
+params['CmD'] = 50
 
 exc_events = [0.1]
-Vm_1event = single_cell_simulation(params,
-                            exc_events,
-                            [],
-                            model='single-compartement',
+resp = single_cell_simulation(params,
+                              exc_events,
+                             [],
+                            #  model ='single-compartment',
+                             model ='two-compartments',
                             tstop=1)
-evoked_1 = Vm_1event - params['El']
-plot_Vm(Vm_1event, params) 
+evoked_1 = resp['Vm_soma'] - params['El']
+plot_Vm(resp['Vm_soma'], params) 
+plot_Vm(resp['Vm_dend'], params, color='r') 
 print(np.max(evoked_1))
 show()
 
@@ -48,7 +55,8 @@ for n in range(0, 10):
     Vm_nevents = single_cell_simulation(params, 
                                 exc_events, 
                                 [], 
-                                model='two-compartements',
+                                # model='two-compartments',
+                                model='single-compartment',
                                 tstop=1)
     evoked_n = Vm_nevents - params['El']
     nevoked_list.append(evoked_n)
