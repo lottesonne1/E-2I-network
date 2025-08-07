@@ -27,8 +27,6 @@ from src.plot import plot_Vm
 # #Excitatory Events
 
 # %%
-params['Vthre'] = -53 
-params['model'] = 'two-compartments'
 exc_events = 0.2+np.arange(20)*0.025 # multiple  equally spaced timed events 
 print(exc_events)
 
@@ -75,12 +73,17 @@ xlim([0,1])
 # %% [markdown]
 # #Simulation 1 excitatory event
 # %%
+params['Vtresh']=0 
 exc_events = [0.1] # single event at 100 ms
 Vm_1event = single_cell_simulation(params,
                             exc_events,
                             [],
+                            model='two-compartements',
                             tstop=1)
 evoked_1 = Vm_1event - params['El']
+plot_Vm(Vm_1event, params)
+show()
+
 
 # %% [markdown]
 # #Simulation 2 excitatory events
@@ -90,20 +93,19 @@ Vm_2events = single_cell_simulation(params,
                             exc_events,
                             [],
                             tstop=1)
-
 evoked_2 = Vm_2events - params['El']
 
 # %%
 #Loop for 10 excitatory events 
 dt=1e-4  
 nevoked_list = []
-params['Vtresh']=0 
 
 for n in range(0, 10):
     exc_events = [0.1 + i * dt for i in range(n)]
     Vm_nevents = single_cell_simulation(params, 
                                 exc_events, 
-                                [], 
+                                [],
+                                model='two-compartements',
                                 tstop=1)
     evoked_n = Vm_nevents - params['El']
     nevoked_list.append(evoked_n)
@@ -129,7 +131,7 @@ for n, evoked_n in enumerate(nevoked_list, start=1):
             color=cmap(n/(len(nevoked_list))))
 
 for ax in AX:
-    ax.set_ylim([-1,60])
+    ax.set_ylim([-1,200])
     ax.set_xlim([0, 0.4])
     ax.set_xlabel('time (s)')
 AX[0].set_ylabel('depolarization (mV)')
@@ -168,3 +170,4 @@ plot(nevoked_list[9], label='10 simultaneous events')
 xlabel('Time (steps)')
 ylabel('Evoked $V_m$ (mV)')
 show()
+# %%

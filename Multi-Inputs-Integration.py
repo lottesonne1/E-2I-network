@@ -26,13 +26,18 @@ from src.plot import plot_Vm
 # 1 excitatory event 
 params['Vtresh'] = 0
 params['qNMDA'] = 0
-params['model'] = 'two-compartments'
+params['RmS'] = 15
+
 exc_events = [0.1]
 Vm_1event = single_cell_simulation(params,
                             exc_events,
                             [],
+                            model='single-compartement',
                             tstop=1)
 evoked_1 = Vm_1event - params['El']
+plot_Vm(Vm_1event, params) 
+print(np.max(evoked_1))
+show()
 
 # %%
 #Loop for 10 excitatory events 
@@ -43,6 +48,7 @@ for n in range(0, 10):
     Vm_nevents = single_cell_simulation(params, 
                                 exc_events, 
                                 [], 
+                                model='two-compartements',
                                 tstop=1)
     evoked_n = Vm_nevents - params['El']
     nevoked_list.append(evoked_n)
@@ -68,7 +74,7 @@ for n, evoked_n in enumerate(nevoked_list, start=1):
             color=cmap(n/(len(nevoked_list))))
 
 for ax in AX:
-    ax.set_ylim([-1,60])
+    ax.set_ylim([-1,200])
     ax.set_xlim([0, 0.4])
     ax.set_xlabel('time (s)')
 AX[0].set_ylabel('depolarization (mV)')
