@@ -23,15 +23,15 @@ def get_neuron_group(params,
     elif model=='two-compartments':
 
         # soma eq
-        RVs = '%(Ri)f*Mohm * %(El)f*mV + %(RmS)f*Mohm * V + %(RmS)f*Mohm * %(Ri)f*Mohm * I0' % params
-        Rs = '%(Ri)f*Mohm + %(RmS)f*Mohm' % params
-        Ds = ' %(RmS)f*Mohm * %(Ri)f*Mohm * %(CmS)f*pF ' % params
-        eqs = "dVs/dt = ( %s - ( %s ) * Vs ) / ( %s ) : volt (unless refractory)\n" % (RVs, Rs, Ds)
+        As = '%(El)f*mV /  ( %(RmS)f*Mohm * %(CmS)f*pF ) ' % params
+        Bs = ' V /  ( %(Ri)f*Mohm * %(CmS)f*pF ) ' % params
+        Cs = ' ( %(Ri)f*Mohm + %(RmS)f*Mohm ) / ( %(RmS)f*Mohm * %(Ri)f*Mohm * %(CmS)f*pF )' % params
+        eqs = "dVs/dt =  %s + %s - ( %s ) * Vs + I0 / ( %f*pF ) : volt (unless refractory)\n" % (As, Bs, Cs, params['CmS'])
         # dendrite eq
-        RVd = '%(Ri)f*Mohm * %(El)f*mV + %(RmD)f*Mohm * Vs + %(RmS)f*Mohm * %(Ri)f*Mohm * I' % params
-        Rd = '%(Ri)f*Mohm + %(RmD)f*Mohm' % params
-        Dd = ' %(RmD)f*Mohm * %(Ri)f*Mohm * %(CmD)f*pF ' % params
-        eqs += "dV/dt = ( %s - ( %s ) * V ) / ( %s ) : volt (unless refractory)\n" % (RVd, Rd, Dd)
+        Ad = '%(El)f*mV /  ( %(RmD)f*Mohm * %(CmD)f*pF ) ' % params
+        Bd = ' Vs /  ( %(Ri)f*Mohm * %(CmD)f*pF ) ' % params
+        Cd = ' ( %(Ri)f*Mohm + %(RmD)f*Mohm ) / ( %(RmD)f*Mohm * %(Ri)f*Mohm * %(CmD)f*pF )' % params
+        eqs += "dV/dt =  %s + %s - ( %s ) * V + I / ( %f * pF ) : volt (unless refractory)\n" % (Ad, Bd, Cd, params['CmD'])
         eqs += """
         I = gE * ( %(Ee)f*mV - V ) + gI * ( %(Ei)f*mV - V ) : amp
         I0 : amp

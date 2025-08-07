@@ -12,11 +12,11 @@ params = {
     'Vreset':-60, # [mV], post-spike reset level
     'Trefrac':5, # [ms], refractory period
     #  === -> two-compartments
-    'RmS':150, # [Mohm], membrane resistance Soma
-    'RmD':300, # M Ohm, membrane resistance Dendrite
-    'Ri':100, # M Ohm, intra-compartment resistance
-    'CmD':300, #pF, membrane capacitance Dendrite
-    'CmS':300, #pF, membrane capacitance Soma
+    'RmS':200, # [Mohm], membrane resistance Soma
+    'RmD':200, # M Ohm, membrane resistance Dendrite
+    'Ri':3, # M Ohm, intra-compartment resistance
+    'CmD':100, #pF, membrane capacitance Dendrite
+    'CmS':100, #pF, membrane capacitance Soma
     # ----------------------------- #
     # ---- Synaptic Parameters ---- #
     # ----------------------------- #
