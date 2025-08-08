@@ -38,6 +38,7 @@ print(np.max(evoked_1))
 show()
 
 # %%
+# Loop for N events 
 
 def simulate_increasing_simultaneous_events(params,
                                             model='two-compartments',
@@ -65,13 +66,24 @@ def simulate_increasing_simultaneous_events(params,
 
     return nevoked_list
 
+# %%
+# comparison  
+evoked_1_ = np.array(evoked_1)
+peak_expected = []
+peak_actual = [] 
+
+for n in range(1, 11):
+    expected = np.max(n * evoked_1)
+    actual = np.max(nevoked_list[n-1])
+    
+    peak_expected.append(expected)
+    peak_actual.append(actual)
 
 
-
-# %% 
+#%%
 
 # SIMULATION
-n_evoked_list =\
+nevoked_list =\
     simulate_increasing_simultaneous_events(params)
 
 # PLOTTING
@@ -107,19 +119,24 @@ show()
 evoked_1_ = np.array(evoked_1)
 peak_expected = []
 peak_actual = [] 
+non_linearity = [] 
 
 for n in range(1, 10):
     expected = np.max(n * evoked_1)
     actual = np.max(nevoked_list[n])
-    
+    percentual_diff = (actual - expected) / expected * 100
+
     peak_expected.append(expected)
     peak_actual.append(actual)
+    non_linearity.append(percentual_diff)
+
 
 # %%
 np.save('data/single-comp-multi-integ-PV.npy',
         dict(params=params,
              peak_expected=peak_expected,
-             peak_actual=peak_actual,            
+             peak_actual=peak_actual,
+             non_linearity=non_linearity
         ))
 
 # %%
@@ -139,6 +156,7 @@ plt.show()
 
 
 # %%
+threshold = 1
 
 def find_nl_kick_level(n_evoked_list):
     pass
@@ -146,7 +164,7 @@ def find_nl_kick_level(n_evoked_list):
 
 depol = np.array(res['peak_expected'])+res['params']['El']
 
-iCond = min( np.argwhere( np.abs(non_linearity) > threshold ) )
+iCond = min(np.argwhere(np.abs(non_linearity) > threshold))
 plt.figure()
 plt.plot(depol, np.abs(non_linearity), 'o') 
 plt.plot(depol, threshold+0*depol, 'r:') 
@@ -158,9 +176,6 @@ plt.legend()
 plt.show()
 
 print(depol[iCond])
-
-# %%
-for loop parameters in single_cell_simulation
     
 # %%
 
