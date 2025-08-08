@@ -72,33 +72,39 @@ def single_cell_simulation(params,
     # create synaptic events
     # - excitatory:
     exc_spikes = SpikeGeneratorGroup(1,
-                                     np.zeros(len(exc_events), dtype=int),
-                                     np.array(exc_events)*second)
+                         np.zeros(len(exc_events), dtype=int),
+                         np.array(exc_events)*second)
     network.add(exc_spikes)
     # - inhibitory:
     inh_spikes = SpikeGeneratorGroup(1,
-                                     np.zeros(len(inh_events), dtype=int),
-                                     np.array(inh_events)*second)
+                         np.zeros(len(inh_events), dtype=int),
+                         np.array(inh_events)*second)
     network.add(inh_spikes)
 
     # create synapses
     # - excitatory:
     exc_synapses = Synapses(exc_spikes, cell,
-                            model=EXC_SYNAPSES_EQUATIONS.format(**params),
-                            on_pre=ON_EXC_EVENT.format(**params),
-                            method='exponential_euler')
-    print(exc_events)
+            model=EXC_SYNAPSES_EQUATIONS.format(**params),
+            on_pre=ON_EXC_EVENT.format(**params),
+            method='exponential_euler')
+
     exc_synapses.connect(i=0, j=0)
     network.add(exc_synapses)
     # - inhibitory:
     inh_synapses = Synapses(inh_spikes, cell,
-                            model=INH_SYNAPSES_EQUATIONS.format(**params),
-                            on_pre=ON_INH_EVENT.format(**params),
-                            method='exponential_euler')
+            model=INH_SYNAPSES_EQUATIONS.format(**params),
+            on_pre=ON_INH_EVENT.format(**params),
+            method='exponential_euler')
     inh_synapses.connect(i=0, j=0)
     network.add(inh_synapses)
 
-
+    spikes = SpikeMonitor(cell)
+    network.add(spikes)
+    
+    sim = {'exc_events':exc_spikes,
+           'inh_events':inh_spikes,
+           'Vm_dend':None, # by default
+           }
 
     if model=='single-compartment':
 
@@ -110,8 +116,8 @@ def single_cell_simulation(params,
         cell.V = params['El']*mV 
         network.run(tstop*second)
 
-        return {'Vm_soma':M.V[0]/mV,
-                'Vm_dend':None}
+        sim['Vm_soma'] = M.V[0]/mV
+        sim['spikes'] = np.array(spikes.t)
 
     elif model=='two-compartments':
 
@@ -124,8 +130,11 @@ def single_cell_simulation(params,
         cell.V = params['El']*mV 
         network.run(tstop*second)
 
-        return {'Vm_soma':M.Vs[0]/mV,
-                'Vm_dend':M.V[0]/mV}
+        sim['Vm_soma'] = M.Vs[0]/mV
+        sim['Vm_dend'] = M.V[0]/mV
+        sim['spikes'] = np.array(spikes.t)
+
+    return sim
 
 if __name__=='__main__':
 
