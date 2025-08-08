@@ -38,25 +38,43 @@ print(np.max(evoked_1))
 show()
 
 # %%
-#Loop for 10 excitatory events 
-dt = 1e-4  
-nevoked_list = []
 
-for n in range(0, 10):
-    exc_events = [0.1 + i * dt for i in range(n)]
+def simulate_increasing_simultaneous_events(params,
+                                            model='two-compartments',
+                                            Nmax=10):
+    
+    # disable spiking by putting threshold very high
+    params['Vtresh'] = 100 * mV
 
-    Vm_dict = single_cell_simulation(params, 
-                                     exc_events, 
-                                     [], 
-                                     model='two-compartments',  
-                                     #model='single-compartment',
-                                     tstop=1)
+    #Loop for Nmax excitatory events 
+    nevoked_list = []
 
-    evoked_n = Vm_dict['Vm_soma'] - params['El']
-    nevoked_list.append(evoked_n)
+    for n in range(Nmax):
+
+        exc_events = [0.1 +\
+                       i * params['dt'] for i in range(n)]
+
+        Vm_dict = single_cell_simulation(params, 
+                                        exc_events, 
+                                        [], 
+                                        model=model,  
+                                        tstop=1)
+
+        evoked_n = Vm_dict['Vm_soma'] - params['El']
+        nevoked_list.append(evoked_n)
+
+    return nevoked_list
+
+
 
 
 # %% 
+
+# SIMULATION
+n_evoked_list =\
+    simulate_increasing_simultaneous_events(params)
+
+# PLOTTING
 fig, AX = plt.subplots(1, 2, figsize=(7,3))
 inset = fig.add_axes([0.93, 0.2, 0.04, 0.6])
 cmap = mpl.cm.viridis_r
@@ -90,22 +108,140 @@ evoked_1_ = np.array(evoked_1)
 peak_expected = []
 peak_actual = [] 
 
-for n in range(1, 11):
+for n in range(1, 10):
     expected = np.max(n * evoked_1)
-    actual = np.max(nevoked_list[n-1])
+    actual = np.max(nevoked_list[n])
     
     peak_expected.append(expected)
     peak_actual.append(actual)
 
 # %%
+np.save('data/single-comp-multi-integ-PV.npy',
+        dict(params=params,
+             peak_expected=peak_expected,
+             peak_actual=peak_actual,            
+        ))
+
+# %%
 #comparison plot 
+res = np.load('data/single-comp-multi-integ-PV.npy',
+                  allow_pickle=True).item()
+
 plt.figure()
-plt.plot(peak_expected, peak_actual, 'o-', label='Actual vs Expected')
-plt.plot(peak_expected, peak_expected, 'k--', label='Perfect Linearity')
+plt.plot(res['peak_expected'], res['peak_actual'], 'o-', label='simulation')
+plt.plot(res['peak_expected'], res['peak_expected'], 'k--', label='linearity')
 
 plt.xlabel('expected depolarization (mV)')
 plt.ylabel('modelled depolarization (mV)')
 plt.title('PV-INs')
 plt.legend()
 plt.show()
+
+
 # %%
+
+def find_nl_kick_level(n_evoked_list):
+    pass
+    #return depol[iCond]
+
+depol = np.array(res['peak_expected'])+res['params']['El']
+
+iCond = min( np.argwhere( np.abs(non_linearity) > threshold ) )
+plt.figure()
+plt.plot(depol, np.abs(non_linearity), 'o') 
+plt.plot(depol, threshold+0*depol, 'r:') 
+plt.plot([depol[iCond]], [np.abs(non_linearity)[iCond]], 'ro', ms=10) 
+plt.xlabel('depolarization level (mV)')
+plt.ylabel('abs. non-linearity (%)')
+plt.title('PV-INs')
+plt.legend()
+plt.show()
+
+print(depol[iCond])
+
+# %%
+for loop parameters in single_cell_simulation
+    
+# %%
+
+def build_multi_inputs_data(params,
+                            NMDA_AMPA_ratio=0.,
+                            label='PV'):
+    
+    params['qNMDA'] = NMDA_AMPA_ratio*params['qAMPA']
+
+    # simulate increasing simultaneous events
+    n_evoked_list = simulate_increasing_simultaneous_events(params)
+
+    np.save('data/single-comp-multi-integ-%s.npy' % label,
+            dict(params=params,
+                peak_expected=peak_expected,
+                peak_actual=peak_actual,            
+            ))
+    
+# %%
+if False:
+    from src.default_params import params
+    build_multi_inputs_data(params, NMDA_AMPA_ratio=0., label='PV')
+    build_multi_inputs_data(params, NMDA_AMPA_ratio=2.7, label='SST')
+
+# %%
+def plot_multi_inputs_data(params,
+                           label='PV', color='tab:red'):
+    res = np.load('data/single-comp-multi-integ-%s.npy' % label,
+                  allow_pickle=True).item()
+
+    fig, ax = plt.subplots(1, 1, figsize=(3, 2.5))
+    ax.plot(res['peak_expected'], res['peak_actual'], 'o-', 
+             label='simulation', color=color)
+    ax.plot(res['peak_expected'], res['peak_expected'],
+             'k:', label='linearity')
+    ax.set_xlabel('expected depolarization (mV)')
+    ax.set_ylabel('modelled depolarization (mV)')
+    ax.set_title(label)
+    ax.legend(frameon=False)
+    return fig, ax
+
+# %%
+plot_multi_inputs_data(params, label='PV', color='tab:red')
+#plot_multi_inputs_data(params, label='SST', color='tab:orange')
+
+
+# %% Parameter scan 
+
+def build_nonlinearity_scan_data(params,
+                            RmSs = np.linspace(50, 300, 3),
+                            RmDs = np.linspace(100, 500, 5),
+                            Ris  = np.linspace(3, 100, 4),
+                            NMDA_AMPA_ratio=0.,
+                            label='PV'):
+    
+    params['qNMDA'] = NMDA_AMPA_ratio*params['qAMPA']
+
+    NL_kick_level = np.zeros((len(RmSs),
+                            len(RmDs),
+                            len(Ris)))
+    
+    for iRmS, iRmD, iRi in itertools.product(\
+        range(len(RmSs)), range(len(RmDs)), range(len(Ris))):
+        
+        params['RmS'] = RmSs[iRmS]
+        params['RmD'] = RmDs[iRmD]
+        params['Ri'] = Ris[iRi]
+
+        if False:
+            n_evoked_list =\
+                simulate_increasing_simultaneous_events(params)
+            
+            NL_kick_level[RmS, RmD, Ri] =\
+                find_nl_kick_level(n_evoked_list)
+            
+    np.save('data/nonlinearity-params-scan-two-comp-%s.npy' % label,
+            dict(params=params,
+                peak_expected=peak_expected,
+                peak_actual=peak_actual,            
+            ))
+
+# %%
+build_nonlinearity_scan_data(params, label='PV', NMDA_AMPA_ratio=0.)
+build_nonlinearity_scan_data(params, label='SST', NMDA_AMPA_ratio=2.7)
