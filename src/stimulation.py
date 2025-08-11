@@ -36,7 +36,7 @@ if __name__=='__main__':
 
     from .cell import *
     from .default_params import params
-    from .plot import plot_Vm 
+    from .plot import plot_with_stim
 
     tstop = 2
     params['dt'] = 5e-5
@@ -61,6 +61,5 @@ if __name__=='__main__':
                                 model='single-compartment',
                                 tstop=2)
 
-    plot_Vm(resp['Vm_soma'], params)
+    fig, AX = plot_with_stim(resp)
     show()
-    print(resp)

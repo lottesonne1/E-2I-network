@@ -101,9 +101,10 @@ def single_cell_simulation(params,
     spikes = SpikeMonitor(cell)
     network.add(spikes)
     
-    sim = {'exc_events':exc_spikes,
-           'inh_events':inh_spikes,
+    sim = {'exc_events':exc_events,
+           'inh_events':inh_events,
            'Vm_dend':None, # by default
+           'dt':params['dt'],
            }
 
     if model=='single-compartment':
