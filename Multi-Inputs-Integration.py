@@ -23,6 +23,15 @@ from src.default_params import params
 from src.plot import plot_Vm
 import itertools
 
+#%%
+# set NMDA/AMPA ratio
+def set_nmda_ampa_ratio(params, ratio):
+    params['NMDA_AMPA_ratio'] = ratio
+    params['qNMDA'] = ratio * params['qAMPA']   
+    return params
+
+from src.default_params import params
+
 # %%
 # Loop for N events 
 
@@ -166,7 +175,7 @@ def build_multi_inputs_data(params,
     nevoked_list = simulate_increasing_simultaneous_events(params)
     peak_expected, peak_actual, non_linearity = compute_peaks(nevoked_list, Nmax=10)
 
-    np.save('data/single-comp-multi-integ-PV.npy',
+    np.save('data/single-comp-multi-integ-%s.npy' % label,
             dict(params=params,
                 peak_expected=peak_expected,
                 peak_actual=peak_actual,
