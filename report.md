@@ -13,3 +13,5 @@
 ![ Multi-Input-Integration-MOD_2C](./figures/Multi-Input-Integration-MOD_2C.png) 
 
 ## Analysis of non-linearity: Quantificataion of non-linearity in deviation % from expected depolarization. Modulation of parameters in single and two compartment model to reach physiological membrane potential range of non-linear integration(-70 to -55 mV). 
+
+## Parameter scan: 
