@@ -205,3 +205,5 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+figures/Screenshot 2025-08-14 at 15-47-36 PV SST_multi_input_integration_2C.pdf.png
+figures/Multi-Input-Integration-PV-SST-MOD_demo.png
