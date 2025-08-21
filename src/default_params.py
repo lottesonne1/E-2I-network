@@ -5,7 +5,7 @@ params = {
     #  === -> single-compartment 
     'Rm':100, # [Mohm], membrane resistance
     'Cm':200, # [pF], membrane capacitance
-    'El': -70, # [mV], leak reversal potential / rest potential
+    'El': -70, # [mV], leak reversal potential / ++ potential
     'Ee': 0, # [mV], excitatory reversal potential 
     'Ei': -80, # [mV], excitatory reversal potential 
     'Vtresh':-53, # [mV], spiking threshold

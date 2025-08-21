@@ -152,9 +152,9 @@ evoked_1_ = np.array(evoked_1)
 peak_expected = []
 peak_actual = [] 
 
-for n in range(1, 11):
+for n in range(1, 10):
     expected = np.max(n * evoked_1)
-    actual = np.max(nevoked_list[n-1])
+    actual = np.max(nevoked_list[n])
     
     peak_expected.append(expected)
     peak_actual.append(actual)
