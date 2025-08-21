@@ -23,6 +23,10 @@ from src.default_params import params
 from src.plot import plot_Vm
 import itertools
 
+# by default:
+label = 'SST'
+NMDA_AMPA_ratio = 2.7
+
 # %%
 # Loop for N events 
 
@@ -32,6 +36,8 @@ def simulate_increasing_simultaneous_events(params,
                                             Nmax=10):    
     params['Vtresh'] = 100 * mV
     params['NMDA_AMPA_ratio'] = NMDA_AMPA_ratio
+    params['qNMDA'] = params['NMDA_AMPA_ratio']*params['qAMPA']
+
     nevoked_list = []
 
     for n in range(1, Nmax+1):
@@ -56,7 +62,7 @@ def simulate_increasing_simultaneous_events(params,
 nevoked_list =\
     simulate_increasing_simultaneous_events(params,
                                             model='two-compartments',
-                                            NMDA_AMPA_ratio=0.)
+                                            NMDA_AMPA_ratio=NMDA_AMPA_ratio)
 
 # PLOTTING
 fig, AX = plt.subplots(1, 2, figsize=(7,3), dpi=200)
@@ -105,8 +111,9 @@ def compute_peaks(nevoked_list, Nmax=10):
 
 # %%
 
-peak_expected, peak_actual, non_linearity = compute_peaks(nevoked_list, Nmax=10)
-np.save('data/single-comp-multi-integ-PV.npy',
+peak_expected, peak_actual, non_linearity\
+      = compute_peaks(nevoked_list, Nmax=10)
+np.save('data/single-comp-multi-integ-%s.npy' % label,
         dict(params=params,
              peak_expected=peak_expected,
              peak_actual=peak_actual,
@@ -115,7 +122,7 @@ np.save('data/single-comp-multi-integ-PV.npy',
 
 # %%
 #comparison plot
-res = np.load('data/single-comp-multi-integ-PV.npy',
+res = np.load('data/single-comp-multi-integ-%s.npy' % label,
               allow_pickle=True).item()
 non_linearity = np.array( (res['peak_actual'] - res['peak_expected']) / res['peak_expected'] * 100 )
 plt.figure(dpi=200)
@@ -132,7 +139,8 @@ plt.show()
 # find non-linearity kick level
 threshold = 25
 
-def find_nl_kick_level(peak_expected, El, non_linearity, threshold=threshold):
+def find_nl_kick_level(peak_expected, El, non_linearity, 
+                       threshold=threshold):
     depol = np.array(peak_expected) + El
     above = np.where(np.abs(non_linearity) > threshold)[0]
     if len(above) == 0:
@@ -173,7 +181,7 @@ def build_multi_inputs_data(params,
             ))
     
 # %%
-if True:
+if False:
     from src.default_params import params
     build_multi_inputs_data(params, NMDA_AMPA_ratio=0., label='PV')
     build_multi_inputs_data(params, NMDA_AMPA_ratio=2.7, label='SST')
@@ -196,6 +204,7 @@ def plot_multi_inputs_data(params,
     return fig, ax
 
 # %%
+from src.default_params import params
 plot_multi_inputs_data(params, label='PV', color='tab:red')
 plot_multi_inputs_data(params, label='SST', color='tab:orange')
 
@@ -206,14 +215,15 @@ def build_nonlinearity_scan_data(params,
                                  RmSs=np.linspace(50, 300, 3),
                                  RmDs=np.linspace(100, 500, 5),
                                  Ris=np.linspace(3, 100, 4),
+                                 Nsyn=10,
                                  label='PV',
-                                 NMDA_AMPA_ratio=0.):
+                                 NMDA_AMPA_ratio=0.,
+                                 NL_kick_threshold=25.):
     
     params['qNMDA'] = NMDA_AMPA_ratio*params['qAMPA']
 
-    NL_kick_level = np.zeros((len(RmSs), 
-                              len(RmDs), 
-                              len(Ris)))
+    Peak_Actual = np.zeros((len(RmSs), len(RmDs), len(Ris), Nsyn))
+    Peak_Expected = np.zeros((len(RmSs), len(RmDs), len(Ris), Nsyn))
 
     for iRmS, iRmD, iRi in itertools.product(
         range(len(RmSs)),
@@ -225,72 +235,77 @@ def build_nonlinearity_scan_data(params,
         params['Ri'] = Ris[iRi]
 
         nevoked_list = simulate_increasing_simultaneous_events(
-            params, NMDA_AMPA_ratio=NMDA_AMPA_ratio
-        )
-        peak_expected, peak_actual, non_linearity = compute_peaks(nevoked_list)
+                                        params, 
+                                        NMDA_AMPA_ratio=NMDA_AMPA_ratio,
+                                        Nmax=Nsyn)
 
-        kick = find_nl_kick_level(peak_expected, params['El'], non_linearity, threshold)
-        if kick is None:
-            NL_kick_level[iRmS, iRmD, iRi] = np.nan
-        else:
-            iCond, _, _, depol = kick
-            NL_kick_level[iRmS, iRmD, iRi] = depol[iCond]
+        peak_expected, peak_actual, _ = compute_peaks(nevoked_list)
+        Peak_Actual[iRmS, iRmD, iRi, :] = peak_actual
+        Peak_Expected[iRmS, iRmD, iRi, :] = peak_expected
 
     np.save('data/nonlinearity-params-scan-two-comp-%s.npy' % label,
-            dict(params=params, NL_kick_level=NL_kick_level, 
-                 peak_expected=peak_expected,
-                 peak_actual=peak_actual,
+            dict(params=params, 
+                 Peak_Actual=Peak_Actual,
+                 Peak_Expected=Peak_Expected,
                  RmSs=RmSs, RmDs=RmDs, Ris=Ris))
 
 # %%
-build_nonlinearity_scan_data(params, label='PV', NMDA_AMPA_ratio=0.)
-build_nonlinearity_scan_data(params, label='SST', NMDA_AMPA_ratio=2.7)
+if False:
+    build_nonlinearity_scan_data(params, label='PV', NMDA_AMPA_ratio=0.)
+    build_nonlinearity_scan_data(params, label='SST', NMDA_AMPA_ratio=2.7)
 
 #%%
 #basic stats
-res = np.load('data/nonlinearity-params-scan-two-comp-PV.npy', allow_pickle=True).item()
-NL = res['NL_kick_level']
-params = res['params']      # params (note: this holds only the last params values)
-RmSs = res['RmSs']
-RmDs = res['RmDs']
-Ris = res['Ris']
-idxs = np.argwhere(np.abs(NL) >= threshold)   # list of (iRmS, iRmD, iRi) indices
+label = 'PV'
+res = np.load('data/nonlinearity-params-scan-two-comp-%s.npy' % label, 
+              allow_pickle=True).item()
 
 
-print("Shape:", NL.shape)
-print('NL mean:', NL.mean())
-print('NL std:', NL.std())
-print('NL min:', NL.min())
-print('NL max:', NL.max())  
-print("Fraction above threshold:", np.mean(np.abs(NL) > 25))
-print(f'Number of parameter combos >= {threshold}%: {len(idxs)}')
-combos = []
-for (iRmS, iRmD, iRi) in idxs:
-    combo = {
-        'RmS': RmSs[iRmS],
-        'RmD': RmDs[iRmD],
-        'Ri' : Ris[iRi],
-        'NL' : NL[iRmS, iRmD, iRi]
-    }
-    combos.append(combo)
+# %%
 
-if len(combos) > 0:
-    RmS_vals = np.array([c['RmS'] for c in combos])
-    RmD_vals = np.array([c['RmD'] for c in combos])
-    Ri_vals  = np.array([c['Ri']  for c in combos])
+fig, AX = plt.subplots(1, len(res['Ris']) ,figsize=(8,2))
+plt.subplots_adjust(bottom=0.25, right=.85)
 
-    print('RmS in [%.3g, %.3g]' % (RmS_vals.min(), RmS_vals.max()))
-    print('RmD in [%.3g, %.3g]' % (RmD_vals.min(), RmD_vals.max()))
-    print('Ri  in [%.3g, %.3g]' % (Ri_vals.min(), Ri_vals.max()))
+cmap = mpl.cm.autumn
+
+vmin = -65 
+vmax = np.nanmax(res['NL_kick_level'])
+
+def rescale(x):
+    return (x-vmin)/(vmax-vmin)
+
+def set_2d_scan_axes(ax, res):
+    ax.set_xlabel('$R_m^D$ (M$\Omega$)')
+    ax.set_ylabel('$R_m^S$ (M$\Omega$)' if i==0 else '')
+    ax.set_yticks(range(len(res['RmSs'])))
+    ax.set_xticks(range(len(res['RmDs'])))
+    ax.set_xticklabels([r for r in res['RmDs']], rotation=60)
+    ax.set_yticklabels([r for r in res['RmSs']] if i==0 else [])
+
+for i, ri in enumerate(res['Ris']):
+    AX[i].set_title('$R_i$ = %.1f M$\Omega$' % ri )
+    AX[i].imshow(rescale(res['NL_kick_level'][:,:,i]), 
+                 vmin=0, vmax=1, origin='lower',
+                 aspect='auto', cmap=cmap)
+    set_2d_scan_axes(AX[i], res)
+
+inset = fig.add_axes([0.93, 0.2, 0.04, 0.6])
+bounds = np.linspace(vmin, vmax, 10)
+norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+
+cb = fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap),
+             cax=inset, orientation='vertical',
+            #  ticks=[],
+             label="depol")
+
+
+# %%
+
+NL_kick_level[iRmS, iRmD, iRi] = np.max(non_linearity)
+
+kick = find_nl_kick_level(peak_expected, params['El'], non_linearity, threshold)
+if kick is None:
+    NL_kick_level[iRmS, iRmD, iRi] = np.nan
 else:
-    print('No combos crossed threshold.')
-
-print(f"Found {len(idxs)} parameter combos with |NL| >= {threshold}%:\n")
-
-for (iRmS, iRmD, iRi) in idxs:
-    RmS_val = RmSs[iRmS]
-    RmD_val = RmDs[iRmD]
-    Ri_val  = Ris[iRi]
-    NL_val  = NL[iRmS, iRmD, iRi]
-
-    print(f"  RmS={RmS_val:.1f}, RmD={RmD_val:.1f}, Ri={Ri_val:.1f}  -->  NL={NL_val:.2f}")
+    iCond, _, _, depol = kick
+    NL_kick_level[iRmS, iRmD, iRi] = depol[iCond]
