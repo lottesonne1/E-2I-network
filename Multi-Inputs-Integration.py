@@ -27,6 +27,7 @@ import itertools
 # Loop for N events 
 
 def simulate_increasing_simultaneous_events(params,
+                                            NMDA_AMPA_ratio=0,
                                             model='two-compartments',
                                             NMDA_AMPA_ratio=0.,
                                             Nmax=10):    
@@ -55,8 +56,8 @@ def simulate_increasing_simultaneous_events(params,
 # SIMULATION
 nevoked_list =\
     simulate_increasing_simultaneous_events(params,
-                                            model='two-compartments',
-                                            NMDA_AMPA_ratio=0.)
+                                            NMDA_AMPA_ratio=0,
+                                            model='two-compartments')
 
 # PLOTTING
 fig, AX = plt.subplots(1, 2, figsize=(7,3), dpi=200)
