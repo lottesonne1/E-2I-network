@@ -78,21 +78,21 @@ n_evoked_list =\
 fig, AX = plt.subplots(1, 2, figsize=(7,3))
 inset = fig.add_axes([0.93, 0.2, 0.04, 0.6])
 cmap = mpl.cm.viridis_r
-bounds = np.arange(len(nevoked_list)+1)
+bounds = np.arange(len(n_evoked_list)+1)
 norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
 
 cb = fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap),
              cax=inset, orientation='vertical',
              ticks=[],
              label="n synapses")
-#cb.set_ticks(ticks=np.arange(len(nevoked_list))+1.5,
+#cb.set_ticks(ticks=np.arange(len(n_evoked_list))+1.5,
 #             labels=[str(i) for i in 1+np.arange(len(nevoked_list))])
-for n, evoked_n in enumerate(nevoked_list, start=1):
+for n, evoked_n in enumerate(n_evoked_list, start=1):
     expected = n * evoked_1
     plot_Vm(expected, params, ax=AX[0],
-            color=cmap(n/(len(nevoked_list))))
+            color=cmap(n/(len(n_evoked_list))))
     plot_Vm(evoked_n, params, ax=AX[1],
-            color=cmap(n/(len(nevoked_list))))
+            color=cmap(n/(len(n_evoked_list))))
 
 for ax in AX:
     ax.set_ylim([-1,60])

@@ -20,8 +20,8 @@ params = {
     # ----------------------------- #
     # ---- Synaptic Parameters ---- #
     # ----------------------------- #
-    'qAMPA':2,# [nS] # 
-    'qNMDA':2*2.7,# [nS] # NMDA-AMPA ratio=2.7
+    'qAMPA':4,# [nS] # 
+    'qNMDA':4*2.7,# [nS] # NMDA-AMPA ratio=2.7
     'qGABA':10,# [nS] # 
     'tauDecayAMPA':5,# [ms]
     'tauDecayGABA':5,# [ms]
