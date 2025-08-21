@@ -166,7 +166,7 @@ def build_multi_inputs_data(params,
     nevoked_list = simulate_increasing_simultaneous_events(params)
     peak_expected, peak_actual, non_linearity = compute_peaks(nevoked_list, Nmax=10)
 
-    np.save('data/single-comp-multi-integ-%s.npy' % label,
+    np.save('data/single-comp-multi-integ-PV.npy',
             dict(params=params,
                 peak_expected=peak_expected,
                 peak_actual=peak_actual,
