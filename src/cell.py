@@ -105,6 +105,7 @@ def single_cell_simulation(params,
            'inh_events':inh_events,
            'Vm_dend':None, # by default
            'dt':params['dt'],
+           'tstop':tstop,
            }
 
     if model=='single-compartment':

@@ -5,10 +5,11 @@ def plot_with_stim(resp,
                    tlim=None,
                    peak=0,
                    color='k',
+                   figsize=(7,3),
                    AX=None):
 
     if AX is None:
-        fig = plt.figure(figsize=(7,3))
+        fig = plt.figure(figsize=figsize)
         AX = []
         AX.append(plt.subplot2grid((3,1),(0,0), 
                                    rowspan=2,
@@ -41,9 +42,9 @@ def plot_with_stim(resp,
     AX[1].plot(resp['exc_events'],
                np.random.randint(20, 100, 
                                  size=len(resp['exc_events'])),
-               'o', ms=1, color='b')
+               'o', ms=1, color='g')
     AX[1].annotate('exc ', (0,1), ha='right', va='top',
-                   xycoords='axes fraction', color='b')
+                   xycoords='axes fraction', color='g')
 
 
     for ax in AX:
