@@ -27,17 +27,28 @@ from src.plot import plot_Vm
 # #Excitatory Events
 
 # %%
-exc_events = 0.2 + np.arange(20) * 0.025  # 20 equally spaced events
+exc_events = 0.1 + np.arange(20) * 0.025  # 20 equally spaced events
 
 Vm_dict = single_cell_simulation(params,
                                  exc_events,
                                  [],
                                  model='two-compartments',
                                  tstop=1)
-plot_Vm(Vm_dict['Vm_soma'], params) #soma
-if Vm_dict['Vm_dend'] is not None: #dendrite
-   plot_Vm(Vm_dict['Vm_dend'], params, color='r')
-show()
+
+def plot_Vm(Vm, params, color='b', dpi=200):
+    plt.figure(dpi=dpi)
+    t = np.arange(len(Vm)) * params['dt']
+    plt.plot(t, Vm, label='Vm', color=color)
+    plt.xlabel('time (ms)')
+    plt.ylabel('membrane potential (mV)')
+    plt.title('Consecutive excitatory events')
+    plt.axhline(y=params['El'], color='k', linestyle='--', label='El')
+    plt.legend()
+    plt.show()
+
+plot_Vm(Vm_dict['Vm_soma'], params, color='b')
+#if Vm_dict['Vm_dend'] is not None:
+    #plot_Vm(Vm_dict['Vm_dend'], params, color='r')
 
 # %% [markdown]
 # #Inhibitory Events
@@ -83,9 +94,19 @@ Vm_1event_dic = single_cell_simulation(params,
                                        tstop=1)
 
 evoked_1 = Vm_1event_dic['Vm_soma'] - params['El']
-plot_Vm(Vm_1event_dic['Vm_soma'], params)
-show()
 
+def plot_Vm(Vm, params, color='b', dpi=200):
+    t = np.arange(len(Vm)) * params['dt']
+    plt.figure(dpi=dpi)
+    plt.plot(t, Vm, label='Vm', color=color)
+    plt.xlabel('time (s)')
+    plt.ylabel('membrane potential (mV)')
+    plt.title('Single excitatory event')
+    plt.axhline(y=params['El'], color='k', linestyle='--', label='El')
+    plt.legend()
+    plt.show()
+
+plot_Vm(Vm_1event_dic['Vm_soma'], params, color='b')
 # %% [markdown]
 # #Simulation 2 excitatory events
 dt = 1e-4  # seconds
