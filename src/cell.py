@@ -2,7 +2,9 @@ from brian2 import *
 from .synapses import get_synapses_eqs
 
 def get_neuron_group(params,
-                     model='single-compartment'):
+                     model='single-compartment',
+                     N=1,
+                     verbose=True):
     
     if model=='single-compartment':
 
@@ -13,8 +15,10 @@ def get_neuron_group(params,
         gE : siemens
         gI : siemens
         """ % params
+        if verbose:
+            print(eqs)
 
-        return NeuronGroup(1, eqs, 
+        return NeuronGroup(N, eqs, 
                         threshold='V > %(Vtresh)f*mV' % params, 
                         reset='V=%(Vreset)f * mV ' % params, 
                         refractory=params['Trefrac']*1e-3*second, 
@@ -38,9 +42,10 @@ def get_neuron_group(params,
         gE : siemens
         gI : siemens
         """ % params
-        print(eqs)
+        if verbose:
+            print(eqs)
 
-        return NeuronGroup(1, eqs, 
+        return NeuronGroup(N, eqs, 
                            threshold='Vs > %(Vtresh)f*mV' % params, 
                            reset='Vs=%(Vreset)f * mV ' % params, 
                            refractory=params['Trefrac']*1e-3*second, 

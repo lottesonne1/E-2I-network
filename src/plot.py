@@ -27,7 +27,7 @@ def plot_with_stim(resp,
                              dtype=int)] = peak
     AX[0].plot(np.arange(len(resp['Vm_soma']))*resp['dt'], 
                resp['Vm_soma'], color=color)
-    AX[0].plot([5e-3,5e-3], [-20,0], 'k-')
+    AX[0].plot([5e-3,5e-3], [-20,0], 'k-', linewidth=1)
     AX[0].annotate(' 20mV', (1e-3,-10), 
                    rotation=90, va='center', ha='right')
     AX[0].plot([5e-3,105e-3], [-20,-20], 'k-')

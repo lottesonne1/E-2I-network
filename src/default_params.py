@@ -45,11 +45,21 @@ params = {
     "p_PvInh_PyrExc":0.05, "p_PvInh_PvInh":0.05, "p_PvInh_SstInh":0.05, 
     "p_SstInh_PyrExc":0.05, "p_SstInh_PvInh":0.05, "p_SstInh_SstInh":0.05, 
     "p_AffExc_PyrExc":0.1, "p_AffExc_PvInh":0.1, "p_AffExc_SstInh":0.1, 
+    # population-specfici synaptic parameters:
+    "qNMDA_PyrExc":0, "qNMDA_PvInh":0, "qNMDA_SstInh":2*2.7, 
+    # population-specfici synaptic parameters:
+    "type_PyrExc":'single-compartment', 
+    "type_PvInh":'single-compartment', 
+    "type_SstInh":'single-compartment', 
     # additional params
     "qAMPA_AffExc":4.0,
     "PyrExc_Vthre":-50.0, "DsInh_Vthre":-50.0,
     #
     'dt':1e-4, # second
+    'SEED':1,
+    # === afferent population waveform:
+    'Faff1':4.,'Faff2':20.,'Faff3':8.,
+    'DT':900., 'rise':50.
 }
 
 

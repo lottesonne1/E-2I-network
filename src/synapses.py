@@ -4,25 +4,38 @@ def double_exp_normalization(T1, T2):
     # peak normalization of double exponential
     return T1/(T2-T1)*((T2/T1)**(T2/(T2-T1)))
 
+def get_Glutamatergic_eqs(params):
 
-def get_synapses_eqs(params):
-
-    params['nNMDA'] = double_exp_normalization(params['tauRiseNMDA'],params['tauDecayNMDA'])    
-
+    params['nNMDA'] = double_exp_normalization(params['tauRiseNMDA'],
+                                               params['tauDecayNMDA'])
     EXC_SYNAPSES_EQUATIONS =\
-            """dgDecayAMPA/dt = -gDecayAMPA/({tauDecayAMPA}*ms) : 1 (clock-driven)
-               dgRiseNMDA/dt = -gRiseNMDA/({tauRiseNMDA}*ms) : 1 (clock-driven)
-               dgDecayNMDA/dt = -gDecayNMDA/({tauDecayNMDA}*ms) : 1 (clock-driven)
-               gAMPA = ({qAMPA}*nS)*(gDecayAMPA) : siemens
-               gNMDA = ({qNMDA}*nS)*{nNMDA}*(gDecayNMDA-gRiseNMDA)/(1+{etaMg}*{cMg}*exp(-V_post/({V0NMDA}*mV))) : siemens
-               gE_post = gAMPA+gNMDA : siemens (summed)""".format(**params)
+        """dgDecayAMPA/dt = -gDecayAMPA/({tauDecayAMPA}*ms) : 1 (clock-driven)
+        dgRiseNMDA/dt = -gRiseNMDA/({tauRiseNMDA}*ms) : 1 (clock-driven)
+        dgDecayNMDA/dt = -gDecayNMDA/({tauDecayNMDA}*ms) : 1 (clock-driven)
+        gAMPA = ({qAMPA}*nS)*(gDecayAMPA) : siemens
+        gNMDA = ({qNMDA}*nS)*{nNMDA}*(gDecayNMDA-gRiseNMDA)/(1+{etaMg}*{cMg}*exp(-V_post/({V0NMDA}*mV))) : siemens
+        gE_post = gAMPA+gNMDA : siemens (summed)""".format(**params)
     ON_EXC_EVENT = 'gDecayAMPA += 1; gDecayNMDA += 1; gRiseNMDA += 1'
+
+    return EXC_SYNAPSES_EQUATIONS, ON_EXC_EVENT
+
+def get_Gabaergic_eqs(params):
 
     INH_SYNAPSES_EQUATIONS =\
             """dgDecayGABA/dt = -gDecayGABA/({tauDecayGABA}*ms) : 1 (clock-driven)
                gGABA = ({qGABA}*nS)*(gDecayGABA) : siemens
                gI_post = gGABA : siemens (summed)""".format(**params)
     ON_INH_EVENT = 'gDecayGABA+= 1'
+
+    return INH_SYNAPSES_EQUATIONS, ON_INH_EVENT 
+
+
+def get_synapses_eqs(params):
+
+    EXC_SYNAPSES_EQUATIONS, ON_EXC_EVENT = \
+        get_Glutamtatergic_eqs(params)
+    INH_SYNAPSES_EQUATIONS, ON_INH_EVENT = \
+        get_Gabaergic_eqs(params)
 
     return EXC_SYNAPSES_EQUATIONS, ON_EXC_EVENT,\
             INH_SYNAPSES_EQUATIONS, ON_INH_EVENT
