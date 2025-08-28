@@ -130,7 +130,7 @@ def build_nonlinearity_scan_data(params,
                  RmSs=RmSs, RmDs=RmDs, Ris=Ris))
     
 # %%
-if False:
+if True:
     build_nonlinearity_scan_data(params, label='PV', NMDA_AMPA_ratio=0.)
     build_nonlinearity_scan_data(params, label='SST', NMDA_AMPA_ratio=2.7)
 
@@ -140,7 +140,7 @@ if False:
 #plot parameters for n synapses 
 
 def compute_square_difference(res, res0):
-    SD = np.abs(np.sum([res0['Fout']+1e-12, -res["Fouts"]], axis=-1)).mean(axis=-1)
+    SD = np.abs(res['Fouts'] - res0['Fout']).mean(axis=-1)
     return SD/np.mean(res0['Fout'])
 
 def plot_full_parameter_grid(label='PV', last_n=7):
@@ -157,8 +157,11 @@ def plot_full_parameter_grid(label='PV', last_n=7):
     cmap = plt.cm.bone_r
 
     fig, AX = plt.subplots(1, len(Ris),
-                           figsize=(2.5*len(Ris), 2*1),
-                           dpi=200)
+                       figsize=(2.5*len(Ris), 2*1),
+                       dpi=200)
+
+    if len(Ris) == 1:
+        AX = [AX]
 
     absMax = np.max(np.abs(SquareDifference))
     vmin, vmax = 0, absMax
@@ -200,7 +203,7 @@ res0 = np.load('data/excitability-params-scan-single-comp.npy', allow_pickle=Tru
 label='PV'
 res = np.load('data/excitability-params-scan-two-comp-%s.npy' % label, allow_pickle=True).item()
 
-config = (0,2,0)
+config = (1,2,0)
 plt.plot(res0['Fout'], 'bo')
 #plt.plot(res['Fouts'][config], 'ro')
 print(100*compute_square_difference(res, res0)[config])

@@ -372,9 +372,9 @@ def plot_full_parameter_grid(label='PV', last_n=7):
 
     cbar_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
     fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(vmin=vmin, vmax=vmax), cmap=cmap),
-                 cax=cbar_ax, orientation='vertical', label="Nonlinearity (%)")
+                 cax=cbar_ax, orientation='vertical', label="Depolarization (%)")
 
-    plt.suptitle('%s: parameter scan' % label, y=0.99)
+    plt.suptitle('%s depolarization parameter scan' % label, fontsize=30, y=0.99)
     plt.tight_layout(rect=[0,0,0.9,0.97])
     plt.show()
     return fig, AX
