@@ -14,22 +14,25 @@ Model = {
     ## UNIT SYSTEM is : ms, mV, pF, nS, pA, Hz (arbitrary and unconsistent, so see code)
     ## ---------------------------------------------------------------------------------
     # numbers of neurons in population
-    'N_RecExc':4000, 'N_RecInh':1000, 'N_AffExc':100, 'N_DsInh':500,
+    'N_PyrExc':4000, 'N_PvInh':500, 'N_SstInh':500, 
+    'N_AffExc':100, 'N_DsInh':500,
     # synaptic weights (nS)
-    'Q_RecExc_RecExc':2., 'Q_RecExc_RecInh':2., 
-    'Q_RecInh_RecExc':10., 'Q_RecInh_RecInh':10., 
-    'Q_AffExc_RecExc':4., 'Q_AffExc_RecInh':4., 
+    'Q_PyrExc_PyrExc':2., 'Q_PyrExc_PvInh':2., 'Q_PyrExc_SstInh':2., 
+    'Q_PvInh_PyrExc':10., 'Q_PvInh_PvInh':10., 'Q_PvInh_SstInh':10., 
+    'Q_SstInh_PyrExc':10., 'Q_SstInh_PvInh':10., 'Q_SstInh_SstInh':10., 
+    'Q_AffExc_PyrExc':4., 'Q_AffExc_PvInh':4., 'Q_AffExc_SstInh':4.,  
     'Q_AffExc_DsInh':4.,
-    'Q_DsInh_RecInh':10., 
+    'Q_DsInh_PvInh':10., 'Q_DsInh_SstInh':10., 
     # synaptic time constants (ms)
     'Tse':5., 'Tsi':5.,
     # synaptic reversal potentials (mV)
     'Ee':0., 'Ei': -80.,
     # connectivity parameters (proba.)
-    'p_RecExc_RecExc':0.05, 'p_RecExc_RecInh':0.05, 
-    'p_RecInh_RecExc':0.05, 'p_RecInh_RecInh':0.05, 
-    'p_DsInh_RecInh':0.05, 
-    'p_AffExc_RecExc':0.1, 'p_AffExc_RecInh':0.1, 
+    'p_PyrExc_PyrExc':0.05, 'p_PyrExc_PvInh':0.05, 'p_PyrExc_SstInh':0.05, 
+    'p_PvInh_PyrExc':0.05, 'p_PvInh_PvInh':0.05, 'p_PvInh_SstInh':0.05, 
+    'p_SstInh_PyrExc':0.05, 'p_SstInh_PvInh':0.05, 'p_SstInh_SstInh':0.05, 
+    'p_DsInh_PvInh':0.05, 'p_DsInh_SstInh':0.05, 
+    'p_AffExc_PyrExc':0.1, 'p_AffExc_PvInh':0.1, 'p_AffExc_SstInh':0.1, 
     'p_AffExc_DsInh':0.075,
     # afferent stimulation (Hz)
     'F_AffExc':10.,
@@ -37,38 +40,61 @@ Model = {
     'dt':0.1, 'SEED':3, # low by default, see later
     ## ---------------------------------------------------------------------------------
     # === cellular properties (based on AdExp), population by population ===
-    # --> Excitatory population (RecExc, recurrent excitation)
-    'RecExc_Gl':10., 'RecExc_Cm':200.,'RecExc_Trefrac':5.,
-    'RecExc_El':-70., 'RecExc_Vthre':-50., 'RecExc_Vreset':-70., 'RecExc_delta_v':0.,
-    'RecExc_a':0., 'RecExc_b': 0., 'RecExc_tauw':1e9,
-    # --> Inhibitory population (RecInh, recurrent inhibition)
-    'RecInh_Gl':10., 'RecInh_Cm':200.,'RecInh_Trefrac':5.,
-    'RecInh_El':-70., 'RecInh_Vthre':-53., 'RecInh_Vreset':-70., 'RecInh_delta_v':0.,
-    'RecInh_a':0., 'RecInh_b': 0., 'RecInh_tauw':1e9,
+    # --> Excitatory population (PyrExc, recurrent excitation)
+    'PyrExc_Rm':100., 'PyrExc_Cm':200.,'PyrExc_Trefrac':5.,
+    'PyrExc_El':-70., 'PyrExc_Vthre':-50., 'PyrExc_Vreset':-70., 
+    'PyrExc_RmS':200., 'PyrExc_RmD': 200., 'PyrExc_Ri': 3.,  
+    'PyrExc_CmS':100., 'PyrExc_CmD': 100., 
+    # --> Inhibitory population (PvInh)
+    'PvInh_Rm':100., 'PvInh_Cm':200.,'PvInh_Trefrac':5.,
+    'PvInh_El':-70., 'PvInh_Vthre':-53., 'PvInh_Vreset':-70.,
+    'PvInh_RmS':200., 'PvInh_RmD': 200., 'PvInh_Ri': 3.,  
+    'PvInh_CmS':100., 'PvInh_CmD': 100., 
+    # --> Inhibitory population (SstInh)
+    'SstInh_Rm':100., 'SstInh_Cm':200.,'SstInh_Trefrac':5.,
+    'SstInh_El':-70., 'SstInh_Vthre':-53., 'SstInh_Vreset':-70.,
+    'SstInh_RmS':200., 'SstInh_RmD': 200., 'SstInh_Ri': 3.,  
+    'SstInh_CmS':100., 'SstInh_CmD': 100., 
     # --> Disinhibitory population (DsInh, disinhibition)
-    'DsInh_Gl':10., 'DsInh_Cm':200.,'DsInh_Trefrac':5.,
-    'DsInh_El':-70., 'DsInh_Vthre':-50., 'DsInh_Vreset':-70., 'DsInh_delta_v':0.,
-    'DsInh_a':0., 'DsInh_b': 0., 'DsInh_tauw':1e9,
+    'DsInh_Rm':100., 'DsInh_Cm':200.,'DsInh_Trefrac':5.,
+    'DsInh_El':-70., 'DsInh_Vthre':-50., 'DsInh_Vreset':-70., 
+    'DsInh_RmS':200., 'DsInh_RmD': 200., 'DsInh_Ri': 3.,  
+    'DsInh_CmS':100., 'DsInh_CmD': 100., 
     ## ---------------------------------------------------------------------------------
     # === afferent population waveform:
     'Faff1':4.,'Faff2':20.,'Faff3':8.,
-    'DT':900., 'rise':50.
+    'DT':900., 'rise':50.,
 }
 
 def built_up_neuron_params(Model,
                            NRN_KEY, N=1):
     """ we construct a dictionary from the """
     params = {'name':NRN_KEY, 'N':N}
-    keys = ['Gl', 'Cm','Trefrac', 'El', 'Vthre', 'Vreset']
+    keys = ['Ri', 'RmS', 'RmD', 'CmS', 'CmD', 
+            'Trefrac', 'El', 'Vthre', 'Vreset']
     for k in keys:
-        params[k] = Model[NRN_KEY+'_'+k]
+        if NRN_KEY+'_'+k in Model:
+            params[k] = Model[NRN_KEY+'_'+k]
+        else:
+           print(NRN_KEY+'_'+k)
+           params[k] = Model[k]
     return params
 
 def get_membrane_equation(neuron_params, synaptic_array,\
                           verbose=False):
+
     ## -- membrane equation: Vm dynamics
-    eqs = """
-    dV/dt = (%(Gl)f*nS*(%(El)f*mV - V) + I)/(%(Cm)f*pF) : volt (unless refractory) """ % neuron_params
+    # two-compartments:
+    As = '%(El)f*mV /  ( %(RmS)f*Mohm * %(CmS)f*pF ) ' % neuron_params
+    Bs = ' V /  ( %(Ri)f*Mohm * %(CmS)f*pF ) ' % neuron_params
+    Cs = ' ( %(Ri)f*Mohm + %(RmS)f*Mohm ) / ( %(RmS)f*Mohm * %(Ri)f*Mohm * %(CmS)f*pF )' % neuron_params
+    eqs = "dVs/dt =  %s + %s - ( %s ) * Vs + I0 / ( %f*pF ) : volt (unless refractory)\n" % (As, Bs, Cs, neuron_params['CmS'])
+    # dendrite eq
+    Ad = '%(El)f*mV /  ( %(RmD)f*Mohm * %(CmD)f*pF ) ' % neuron_params
+    Bd = ' Vs /  ( %(Ri)f*Mohm * %(CmD)f*pF ) ' % neuron_params
+    Cd = ' ( %(Ri)f*Mohm + %(RmD)f*Mohm ) / ( %(RmD)f*Mohm * %(Ri)f*Mohm * %(CmD)f*pF )' % neuron_params
+    eqs += "dV/dt =  %s + %s - ( %s ) * V + I / ( %f * pF ) : volt (unless refractory)\n" % (Ad, Bd, Cd, neuron_params['CmD'])
+    print(eqs)
     
     ## -- synaptic currents: 1) adding all synaptic currents to the membrane equation via the I variable
     eqs += """
@@ -324,6 +350,7 @@ def initialize_to_rest(NTWK):
     """
     for ii in range(len(NTWK['POPS'])):
         NTWK['POPS'][ii].V = NTWK['NEURONS'][ii]['params']['El']*brian2.mV
+        NTWK['POPS'][ii].Vs = NTWK['NEURONS'][ii]['params']['El']*brian2.mV
         for jj in range(len(NTWK['POPS'])):
             if NTWK['M'][jj,ii]['pconn']>0: # if connection
                 exec("NTWK['POPS'][ii].G"+NTWK['M'][jj,ii]['name']+" = 0.*brian2.nS")
@@ -360,7 +387,7 @@ def run_3pop_ntwk_model(Model,
 
     print('initializing simulation [...]')
     NTWK = build_populations(Model,
-                             ['RecExc', 'RecInh', 'DsInh'],
+                             ['PyrExc', 'PvInh', 'SstInh', 'DsInh'],
                              AFFERENT_POPULATIONS=['AffExc'],
                              with_Vm=with_Vm,
                              verbose=verbose)
@@ -369,11 +396,11 @@ def run_3pop_ntwk_model(Model,
                                    SEED=Model['SEED'], verbose=verbose)
 
 
-    Model['tstop'] = 100. # Model['rise']+3*(3.*Model['rise']+Model['DT'])
+    Model['tstop'] = Model['rise']+3*(3.*Model['rise']+Model['DT'])
     NTWK['t_array'] = np.arange(int(Model['tstop']/Model['dt']))*Model['dt']
     NTWK['faff_waveform'] = waveform(NTWK['t_array'], Model)
 
-    for i, tpop in enumerate(['RecExc', 'RecInh', 'DsInh']): # both on excitation and inhibition
+    for i, tpop in enumerate(['PyrExc', 'PvInh', 'SstInh', 'DsInh']): # both on excitation and inhibition
         construct_feedforward_input(NTWK, tpop, 'AffExc',
                                     NTWK['t_array'],
                                     NTWK['faff_waveform'],
@@ -416,8 +443,8 @@ if __name__=='__main__':
     ax1.set_xticks([]);ax1.set_ylabel(r'$\nu_a$ (Hz)')
     # populations activity (instant. firing rates)
     ax2 = plt.subplot2grid((6,1), (1, 0), rowspan=2)
-    COLORS = ['#2ca02c', '#d62728', '#9467bd']
-    for i, pop in enumerate(['RecExc', 'RecInh', 'DsInh']):
+    COLORS = ['tab:green', 'tab:red', 'tab:orange', 'tab:purple']
+    for i, pop in enumerate(['PyrExc', 'PvInh', 'SstInh', 'DsInh']):
         rate = NTWK['POP_ACT'][i].rate/brian2.Hz
         rate = gaussian_filter1d(rate, int(20./0.1)) # smoothing
         rate[rate<0.01] = 0.01
@@ -426,9 +453,9 @@ if __name__=='__main__':
     ax2.set_xticks([]);ax2.set_ylabel('pop act. (Hz)')
     # sample Vm traces 
     ax3 = plt.subplot2grid((6,1), (3, 0), rowspan=3)
-    N = [3,1,1] # number displayed per population
+    N = [3,1,1,1] # number displayed per population
     j=0 # index to shift the Vm trace
-    for i, pop in enumerate(['RecExc', 'RecInh', 'DsInh']):
+    for i, pop in enumerate(['PyrExc', 'PvInh', 'SstInh', 'DsInh']):
         for n in range(N[i]):
             ax3.plot(NTWK['t_array'], NTWK['VMS'][i].V[n]/brian2.mV-20*j, '-', color=COLORS[i])
             j+=1

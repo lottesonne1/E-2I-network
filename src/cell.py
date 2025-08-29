@@ -2,6 +2,7 @@ from brian2 import *
 from .synapses import get_synapses_eqs
 
 def get_neuron_group(params,
+                     synaptic_params=None,
                      model='single-compartment',
                      N=1,
                      verbose=True):
@@ -17,12 +18,6 @@ def get_neuron_group(params,
         """ % params
         if verbose:
             print(eqs)
-
-        return NeuronGroup(N, eqs, 
-                        threshold='V > %(Vtresh)f*mV' % params, 
-                        reset='V=%(Vreset)f * mV ' % params, 
-                        refractory=params['Trefrac']*1e-3*second, 
-                        method='euler')
 
     elif model=='two-compartments':
 
@@ -45,11 +40,11 @@ def get_neuron_group(params,
         if verbose:
             print(eqs)
 
-        return NeuronGroup(N, eqs, 
-                           threshold='Vs > %(Vtresh)f*mV' % params, 
-                           reset='Vs=%(Vreset)f * mV ' % params, 
-                           refractory=params['Trefrac']*1e-3*second, 
-                           method='euler')
+    return NeuronGroup(N, eqs, 
+                        threshold='Vs > %(Vtresh)f*mV' % params, 
+                        reset='Vs=%(Vreset)f * mV ' % params, 
+                        refractory=params['Trefrac']*1e-3*second, 
+                        method='euler')
 
 def single_cell_simulation(params, 
                            exc_events,

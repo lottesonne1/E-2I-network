@@ -1,17 +1,19 @@
 from brian2 import *
-from .synapses import get_Gabaergic_eqs, get_Glutamatergic_eqs
+from .synapses import get_Gabaergic_eqs, get_Glutamatergic_eqs,\
+                            get_syn_onevent_params
 from .cell import get_neuron_group
-
+from .stimulation import spikes_from_time_varying_rate,\
+    construct_feedforward_input 
 import itertools
 
 def single_network_simulation(Model,
+                              REC_POPS = ['PyrExc', 'PvInh', 'SstInh'],
                               with_Vm=4,
                               verbose=True):
 
 
     # synaptic equations
 
-    REC_POPS = ['PyrExc', 'PvInh', 'SstInh']
 
     print('initializing simulation [...]')
     NTWK = build_populations(Model,
@@ -24,26 +26,25 @@ def single_network_simulation(Model,
                                    SEED=Model['SEED'], 
                                    verbose=verbose)
 
-    Model['tstop'] = Model['rise']+3*(3.*Model['rise']+Model['DT'])
+    Model['tstop'] = 0.5 # Model['rise']+3*(3.*Model['rise']+Model['DT'])
 
     NTWK['t_array'] = np.arange(\
                 int(Model['tstop']/Model['dt']))*Model['dt']
-    NTWK['faff_waveform'] = waveform(NTWK['t_array'], Model)
+    NTWK['faff_waveform'] = 3.+0* NTWK['t_array']
 
-    """
     for i, tpop in enumerate(REC_POPS): # both on excitation and inhibition
-        construct_feedforward_input(NTWK, tpop, 'AffExc',
+        construct_feedforward_input(NTWK, Model,
+                                    tpop, 'AffExc',
                                     NTWK['t_array'],
                                     NTWK['faff_waveform'],
                                     verbose=verbose,
-                                    SEED=int(37*SEED+i)%13)
+                                    SEED=int(37*Model['SEED']+i)%13)
 
     initialize_to_rest(NTWK)
     
     network_sim = collect_and_run(NTWK,
                                   verbose=verbose)
     
-    """
     print('-> done !')
 
     return NTWK
@@ -53,8 +54,8 @@ def collect_and_run(NTWK, verbose=False):
     collecting all the Brian2 objects and running the simulation
     """
     NTWK['dt'], NTWK['tstop'] = NTWK['Model']['dt'], NTWK['Model']['tstop'] 
-    brian2.defaultclock.dt = NTWK['dt']*brian2.ms
-    net = brian2.Network(brian2.collect())
+    defaultclock.dt = NTWK['dt']*second
+    net = Network(collect())
     OBJECT_LIST = []
     for key in ['POPS',
                 'REC_SYNAPSES', 'RASTER',
@@ -64,7 +65,7 @@ def collect_and_run(NTWK, verbose=False):
             net.add(NTWK[key])
 
     print('running simulation [...]')
-    net.run(NTWK['tstop']*brian2.ms)
+    net.run(NTWK['tstop']*second)
     return net
 
 def get_syn_and_conn_matrix(Model,
@@ -190,6 +191,7 @@ def build_populations(Model,
     
     return NTWK
 
+
 def build_up_recurrent_connections(NTWK, Model,
                                    SEED=1, verbose=False):
     """
@@ -210,26 +212,20 @@ def build_up_recurrent_connections(NTWK, Model,
 
         source_pop, target_pop = \
             NTWK['NEURONS'][ii]['name'], NTWK['NEURONS'][jj]['name']
+        print(source_pop, target_pop)
 
         if ('p_'+source_pop+'_'+target_pop in Model.keys()) and\
                             (Model['p_'+source_pop+'_'+target_pop]>0):
 
             pconn = Model['p_'+source_pop+'_'+target_pop]
 
-            if 'Exc' in source_pop:
-                params2 = params.copy()
-                if 'qNMDAi_%s' % target_pop in params2:
-                    params2['qNMDA'] = params2['qNMDAi_%s' % target_pop]
-                SYNAPSES_EQUATIONS, ON_EVENT = \
-                                get_Glutamatergic_eqs(params2)
-
-            elif 'Inh' in source_pop:
-                SYNAPSES_EQUATIONS, ON_EVENT =\
-                                get_Gabaergic_eqs(params2)
+            SYNAPSES_EQUATIONS, ON_EVENT, P = get_syn_onevent_params(source_pop, 
+                                                             target_pop, 
+                                                             params)
 
             CONN[ii,jj] = Synapses(NTWK['POPS'][ii], NTWK['POPS'][jj],
-                            model=SYNAPSES_EQUATIONS.format(**params2),
-                            on_pre=ON_EVENT.format(**params2),
+                            model=SYNAPSES_EQUATIONS.format(**P),
+                            on_pre=ON_EVENT.format(**P),
                             method='exponential_euler')
 
             # N.B. the following brian2 settings:
@@ -256,6 +252,8 @@ def build_up_recurrent_connections(NTWK, Model,
 
     NTWK['REC_SYNAPSES'] = CONN2 
 
+
+
 def initialize_to_rest(NTWK):
     """
     Vm to resting potential and conductances to 0
@@ -269,4 +267,6 @@ def initialize_to_rest(NTWK):
 if __name__=='__main__':
 
     from .default_params import params
-    single_network_simulation(params)
+    single_network_simulation(params,
+                              REC_POPS = ['PyrExc'],
+                              )

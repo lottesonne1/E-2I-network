@@ -40,6 +40,23 @@ def get_synapses_eqs(params):
     return EXC_SYNAPSES_EQUATIONS, ON_EXC_EVENT,\
             INH_SYNAPSES_EQUATIONS, ON_INH_EVENT
 
+def get_syn_onevent_params(source_pop, target_pop, params):
+
+    P = params.copy()
+    if 'Exc' in source_pop:
+        if 'qAMPA_%s_%s' % (source_pop, target_pop) in params:
+            P['qAMPA'] = params['qAMPA_%s_%s' % (source_pop, target_pop)]
+        elif 'qNMDA_%s_%s' % (source_pop, target_pop) in params:
+            P['qNMDA'] = params['qNMDA_%s_%s' % (source_pop, target_pop)]
+        SYNAPSES_EQUATIONS, ON_EVENT = \
+                        get_Glutamatergic_eqs(P)
+
+    elif 'Inh' in source_pop:
+        SYNAPSES_EQUATIONS, ON_EVENT =\
+                        get_Gabaergic_eqs(P)
+        
+    return SYNAPSES_EQUATIONS, ON_EVENT, P
+
 
 
 if __name__=='__main__':
