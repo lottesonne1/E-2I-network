@@ -48,8 +48,6 @@ for freq in [0.1, 0.5, 1., 3.]:
     fig, AX = plot_with_stim(resp, figsize=(10,3))
 
 #show()
-
-
 # %%
 
 def build_freq_scan(F_exc, params,
@@ -77,7 +75,7 @@ F_out = build_freq_scan(F_exc, params)
 # %%
 def plot_freq_scan(F_exc, F_out,
                    color='tab:grey'):
-    fig, ax = plt.subplots(1, figsize=(3,2)) 
+    fig, ax = plt.subplots(1, figsize=(3,2), dpi=200) 
     ax.plot(F_exc, F_out, 'o-', ms=5, color=color)
     ax.set_xlabel('input freq. $F_{in}$ (Hz)')
     ax.set_ylabel('output freq. $F_{out}$ (Hz)')
@@ -102,9 +100,9 @@ np.save('data/excitability-params-scan-single-comp.npy', dict(params=params,
                                                               Fout=Fout))
 
 def build_nonlinearity_scan_data(params,
-                                 RmSs=np.linspace(40, 300, 2),
-                                 RmDs=np.linspace(100, 600, 3),
-                                 Ris=np.linspace(3, 150, 1),
+                                 RmSs=np.linspace(50, 350, 3),
+                                 RmDs=np.linspace(100, 600, 2),
+                                 Ris=np.linspace(3, 25, 1),
                                  Nsyn=12,
                                  label='PV',
                                  NMDA_AMPA_ratio=0.):
@@ -132,23 +130,22 @@ def build_nonlinearity_scan_data(params,
 # %%
 if True:
     build_nonlinearity_scan_data(params, label='PV', NMDA_AMPA_ratio=0.)
-    build_nonlinearity_scan_data(params, label='SST', NMDA_AMPA_ratio=2.7)
+        #RmSs=np.linspace(50, 350, 3),
+        #RmDs=np.linspace(100, 600, 2),
+        #Ris=np.linspace(3, 25, 1),
+    #build_nonlinearity_scan_data(params, label='SST', NMDA_AMPA_ratio=2.7)
+        #RmSs=np.linspace(20, 80, 2),
+        #RmDs=np.linspace(20, 500, 3),
+        #Ris=np.linspace(80, 130, 1),
 
-
-# %%
 #%%
-#plot parameters for n synapses 
-
+#plot parameters to residuals
 def compute_square_difference(res, res0):
     SD = np.abs(res['Fouts'] - res0['Fout']).mean(axis=-1)
     return SD/np.mean(res0['Fout'])
 
 def plot_full_parameter_grid(label='PV', last_n=7):
-
-    # load the single compartment data
     res0 = np.load('data/excitability-params-scan-single-comp.npy', allow_pickle=True).item()
-
-    # load the two compartment data
     res = np.load('data/excitability-params-scan-two-comp-%s.npy' % label, allow_pickle=True).item()
 
     SquareDifference = compute_square_difference(res, res0)
@@ -157,13 +154,14 @@ def plot_full_parameter_grid(label='PV', last_n=7):
     cmap = plt.cm.bone_r
 
     fig, AX = plt.subplots(1, len(Ris),
-                       figsize=(2.5*len(Ris), 2*1),
+                       figsize=(2.5*len(Ris), 4),
                        dpi=200)
 
     if len(Ris) == 1:
         AX = [AX]
 
     absMax = np.max(np.abs(SquareDifference))
+
     vmin, vmax = 0, absMax
 
     for j, ri in enumerate(Ris):
@@ -184,35 +182,56 @@ def plot_full_parameter_grid(label='PV', last_n=7):
 
     cbar_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
     fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(vmin=vmin, vmax=vmax), cmap=cmap),
-                    cax=cbar_ax, orientation='vertical', label="Residual (%)")
+                    cax=cbar_ax, orientation='vertical', label="norm. residual")
 
-    plt.suptitle('%s: parameter scan' % label, y=0.99)
+    plt.suptitle('%s IO parameter scan' % label, y=0.99)
     plt.tight_layout(rect=[0,0,0.9,0.97])
     plt.show()
     return fig, AX
-_ = plot_full_parameter_grid(label='PV');
+#%%
+if True:
+    plot_full_parameter_grid(label='PV')
+    #plot_full_parameter_grid(label='SST')
 
 # %%
-fig, ax = plt.subplots(1)
+# plot IO for different parameters
 
-res0 = np.load('data/excitability-params-scan-single-comp.npy', allow_pickle=True).item()
+def excitability_scan_plot(label='PV', color='tab:red'):
+    fig, ax = plt.subplots(1, dpi=200)
+    res0 = np.load('data/excitability-params-scan-single-comp.npy', allow_pickle=True).item()
+    res = np.load('data/excitability-params-scan-two-comp-%s.npy' % label, allow_pickle=True).item()
 
+    config = (1,2,0)
+    plt.plot(res0['Fout'], 'ko', label='single-compartment')
+    #plt.plot(res['Fouts'][config], 'ro')
+    print(100*compute_square_difference(res, res0)[config])
 
+    for iRmS, iRmD, iRi in itertools.product(
+        range(len(res['RmSs'])),
+        range(len(res['RmDs'])),
+        range(len(res['Ris']))
+    ):
+        y = res['Fouts'][iRmS, iRmD, iRi]
+        if iRmS == iRmD == iRi == 0:
+            plt.plot(y, 'k-', alpha=0.4, color=color, label='two-compartment')
+        else:
+            plt.plot(y, 'k-', alpha=0.4, color=color)
+    plt.xlabel('input freq. $F_{in}$ (Hz)')
+    plt.ylabel('output freq. $F_{out}$ (Hz)')
+    plt.title('%s input-output curve' % label)
+    plt.legend()
+    plt.show()
+    SquareDifference = compute_square_difference(res, res0)
+    min_index = np.unravel_index(np.argmin(SquareDifference), SquareDifference.shape)
+    best_RmS = res['RmSs'][min_index[0]]
+    best_RmD = res['RmDs'][min_index[1]]
+    best_Ri  = res['Ris'][min_index[2]]
+    print("  RmS =", best_RmS)
+    print("  RmD =", best_RmD)
+    print("  Ri  =", best_Ri)
+    return fig, ax
 
-# load the two compartment data
-label='PV'
-res = np.load('data/excitability-params-scan-two-comp-%s.npy' % label, allow_pickle=True).item()
-
-config = (1,2,0)
-plt.plot(res0['Fout'], 'bo')
-#plt.plot(res['Fouts'][config], 'ro')
-print(100*compute_square_difference(res, res0)[config])
-
-for iRmS, iRmD, iRi in itertools.product(
-    range(len(res['RmSs'])),
-    range(len(res['RmDs'])),
-    range(len(res['Ris']))
-):
-    plt.plot(res['Fouts'][iRmS, iRmD, iRi], 'k-', alpha=0.1)
-    
 # %%
+if True:
+    excitability_scan_plot(label='PV', color='tab:red')
+    excitability_scan_plot(label='SST', color='tab:orange')
