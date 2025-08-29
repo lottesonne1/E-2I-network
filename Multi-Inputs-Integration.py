@@ -135,7 +135,9 @@ plot_peaks(label='SST', color='tab:orange')
 threshold = 25
 label = 'PV' 
 
-def find_nl_kick_level(peak_expected, non_linearity, 
+def find_nl_kick_level(peak_expected,
+                       non_linearity, 
+                       El,
                        threshold=threshold, label='SST'):
     depol = np.array(peak_expected) + El
     above = np.where(np.abs(non_linearity) > threshold)[0]
@@ -283,13 +285,13 @@ def find_nl_kick_level_scan(label='SST', threshold=25):
         peak_actual = Peak_Actual[iRmS, iRmD, iRi, :]
         non_linearity = (peak_actual - peak_expected) / peak_expected * 100
 
-        kick = find_nl_kick_level(peak_expected, El, non_linearity, threshold)
+        kick = find_nl_kick_level(peak_expected, non_linearity, El, threshold)
         if kick is not None:
             iCond, _, _, depol = kick
             depol_at_threshold[iRmS, iRmD, iRi] = depol[iCond]
 
     return depol_at_threshold
-depol_at_threshold = find_nl_kick_level_scan(label=label, threshold=25)
+depol_at_threshold = find_nl_kick_level_scan(label=label, threshold=threshold)
 
 # %%
 #Plot parameter scan 10
@@ -389,13 +391,46 @@ if True:
 
 #%%
 # plot depolarization
-def get_depolarization_data(label='PV'):
+def get_depolarization_data(label='PV', threshold=25):
     res = np.load('data/nonlinearity-params-scan-two-comp-%s.npy' % label, allow_pickle=True).item()
-    depol_at_threshold = find_nl_kick_level_scan(label=label, threshold=25)
-    Nonlinearity = (res["Peak_Actual"] - res["Peak_Expected"]) / res["Peak_Expected"] * 100
+    depol_at_threshold = find_nl_kick_level_scan(label=label, threshold=threshold)
     RmSs, RmDs, Ris = res['RmSs'], res['RmDs'], res['Ris']
-    Nsyn = Nonlinearity.shape[-1]
-    cmap = plt.cm.RdBu
-    min_index = np.unravel_index(np.nanargmin(depol_at_threshold), depol_at_threshold.shape)
 
-    return depol_at_threshold
+    fig, AX = plt.subplots(1, len(Ris), figsize=(3*len(Ris)+1.5, 3), dpi=200)
+    if len(Ris) == 1:
+        AX = [AX]
+    vmin = np.nanmin(depol_at_threshold)
+    vmax = np.nanmax(depol_at_threshold)
+    for i, Ri in enumerate(Ris):
+        im = AX[i].imshow(depol_at_threshold[:, :, i], 
+                        origin='lower', aspect='auto',
+                        extent=[RmDs[0], RmDs[-1], RmSs[0], RmSs[-1]],
+                        cmap='viridis', vmin=vmin, vmax=vmax)
+        AX[i].set_title(f"Ri = {Ri:.1f} MΩ")
+        AX[i].set_xlabel("RmD (MΩ)")
+        if i == 0:
+            AX[i].set_ylabel("RmS (MΩ)")
+
+    cbar_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
+    cbar = fig.colorbar(im, cax=cbar_ax)
+    cbar.set_label("Depolarization (mV)")
+
+    fig.suptitle('%s depolarization across parameter scan' % label, fontsize=18)
+    plt.tight_layout(rect=[0, 0, 0.9, 0.95])
+    plt.show()
+    return fig, AX
+
+#%%
+if True:
+    get_depolarization_data(label='PV')
+    get_depolarization_data(label='SST')
+
+
+#%%
+depol_at_threshold = find_nl_kick_level_scan(label=label, threshold=threshold)
+print("From scan:", depol_at_threshold[iRmS, iRmD, iRi])
+
+kick = find_nl_kick_level(peak_expected, non_linearity, El, threshold)
+if kick is not None:
+    iCond, _, _, depol = kick
+    print("Manual depol at threshold:", depol[iCond])

@@ -100,9 +100,9 @@ np.save('data/excitability-params-scan-single-comp.npy', dict(params=params,
                                                               Fout=Fout))
 
 def build_nonlinearity_scan_data(params,
-                                 RmSs=np.linspace(50, 350, 3),
-                                 RmDs=np.linspace(100, 600, 2),
-                                 Ris=np.linspace(3, 25, 1),
+                                 RmSs=np.linspace(20, 80, 2),
+                                 RmDs=np.linspace(10, 500, 4),
+                                 Ris=np.linspace(80, 130, 1),
                                  Nsyn=12,
                                  label='PV',
                                  NMDA_AMPA_ratio=0.):
@@ -129,15 +129,14 @@ def build_nonlinearity_scan_data(params,
     
 # %%
 if True:
-    build_nonlinearity_scan_data(params, label='PV', NMDA_AMPA_ratio=0.)
+    #build_nonlinearity_scan_data(params, label='PV', NMDA_AMPA_ratio=0.)
         #RmSs=np.linspace(50, 350, 3),
         #RmDs=np.linspace(100, 600, 2),
         #Ris=np.linspace(3, 25, 1),
-    #build_nonlinearity_scan_data(params, label='SST', NMDA_AMPA_ratio=2.7)
+    build_nonlinearity_scan_data(params, label='SST', NMDA_AMPA_ratio=2.7)
         #RmSs=np.linspace(20, 80, 2),
         #RmDs=np.linspace(20, 500, 3),
         #Ris=np.linspace(80, 130, 1),
-
 #%%
 #plot parameters to residuals
 def compute_square_difference(res, res0):
@@ -149,7 +148,6 @@ def plot_full_parameter_grid(label='PV', last_n=7):
     res = np.load('data/excitability-params-scan-two-comp-%s.npy' % label, allow_pickle=True).item()
 
     SquareDifference = compute_square_difference(res, res0)
-
     RmSs, RmDs, Ris = res['RmSs'], res['RmDs'], res['Ris']
     cmap = plt.cm.bone_r
 
@@ -159,16 +157,13 @@ def plot_full_parameter_grid(label='PV', last_n=7):
 
     if len(Ris) == 1:
         AX = [AX]
-
     absMax = np.max(np.abs(SquareDifference))
-
     vmin, vmax = 0, absMax
 
     for j, ri in enumerate(Ris):
         ax = AX[j]
         im = ax.imshow(SquareDifference[:,:,j], origin='lower',
                         aspect='auto', cmap=cmap, vmin=vmin, vmax=vmax)
-
         ax.set_title(f"$R_i$={ri:.1f} MΩ")
         if j == 0:
             ax.set_ylabel(f"\n$R_m^S$ (MΩ)")
@@ -190,8 +185,8 @@ def plot_full_parameter_grid(label='PV', last_n=7):
     return fig, AX
 #%%
 if True:
-    plot_full_parameter_grid(label='PV')
-    #plot_full_parameter_grid(label='SST')
+    #plot_full_parameter_grid(label='PV')
+    plot_full_parameter_grid(label='SST')
 
 # %%
 # plot IO for different parameters
