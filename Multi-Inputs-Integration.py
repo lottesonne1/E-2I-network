@@ -74,7 +74,7 @@ for ax in AX:
     ax.set_ylim([-1,60])
     ax.set_xlim([0, 0.4])
     ax.set_xlabel('time (s)')
-AX[0].set_ylabel('depolarization (mV)')
+AX[0].set_ylabel('modelled depolarization (mV)')
 title = 'Multi-input integration %s' % label
 legend()
 show()
@@ -271,7 +271,7 @@ def find_nl_kick_level_scan(label='SST', threshold=25):
     Peak_Actual = res['Peak_Actual']
     Peak_Expected = res['Peak_Expected']
     RmSs, RmDs, Ris = res['RmSs'], res['RmDs'], res['Ris']
-    El = res['params']['El']
+    El = params['El']
     Nsyn = Peak_Expected.shape[-1]
 
     depol_at_threshold = np.full((len(RmSs), len(RmDs), len(Ris)), np.nan)
@@ -396,7 +396,9 @@ def get_depolarization_data(label='PV', threshold=25):
     depol_at_threshold = find_nl_kick_level_scan(label=label, threshold=threshold)
     RmSs, RmDs, Ris = res['RmSs'], res['RmDs'], res['Ris']
 
-    fig, AX = plt.subplots(1, len(Ris), figsize=(3*len(Ris)+1.5, 3), dpi=200)
+    fig, AX = plt.subplots(1, len(Ris), 
+                           figsize=(3*len(Ris)+1.5, 3), dpi=200)
+    plt.subplots_adjust(right=0.8)
     if len(Ris) == 1:
         AX = [AX]
     vmin = np.nanmin(depol_at_threshold)
@@ -424,8 +426,6 @@ def get_depolarization_data(label='PV', threshold=25):
 if True:
     get_depolarization_data(label='PV')
     get_depolarization_data(label='SST')
-
-
 #%%
 depol_at_threshold = find_nl_kick_level_scan(label=label, threshold=threshold)
 print("From scan:", depol_at_threshold[iRmS, iRmD, iRi])

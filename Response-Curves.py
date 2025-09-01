@@ -8,7 +8,7 @@ from src.cell import single_cell_simulation
 from src.stimulation import *
 from src.default_params import params
 from src.plot import plot_with_stim
-
+import itertools
 # %%
 
 def rate_stim_simulation(exc_rate, params,
@@ -49,7 +49,6 @@ for freq in [0.1, 0.5, 1., 3.]:
 
 #show()
 # %%
-
 def build_freq_scan(F_exc, params,
                     inh_to_exc_rate_factor=3.,
                     label='Pv',
@@ -90,15 +89,11 @@ def plot_freq_scan(F_exc, F_out,
 plot_freq_scan(F_exc, F_out)
 
 # %%
-F_exc
-# %%
-import itertools
-
 F_exc = np.logspace(np.log10(0.3), np.log10(8), 8)
 Fout = build_freq_scan(F_exc, params, model='single-compartment')
 np.save('data/excitability-params-scan-single-comp.npy', dict(params=params,
                                                               Fout=Fout))
-
+#%%
 def build_nonlinearity_scan_data(params,
                                  RmSs=np.linspace(20, 80, 2),
                                  RmDs=np.linspace(10, 500, 4),
@@ -129,7 +124,7 @@ def build_nonlinearity_scan_data(params,
     
 # %%
 if True:
-    #build_nonlinearity_scan_data(params, label='PV', NMDA_AMPA_ratio=0.)
+    build_nonlinearity_scan_data(params, label='PV', NMDA_AMPA_ratio=0.)
         #RmSs=np.linspace(50, 350, 3),
         #RmDs=np.linspace(100, 600, 2),
         #Ris=np.linspace(3, 25, 1),
@@ -185,7 +180,7 @@ def plot_full_parameter_grid(label='PV', last_n=7):
     return fig, AX
 #%%
 if True:
-    #plot_full_parameter_grid(label='PV')
+    plot_full_parameter_grid(label='PV')
     plot_full_parameter_grid(label='SST')
 
 # %%
@@ -213,20 +208,61 @@ def excitability_scan_plot(label='PV', color='tab:red'):
             plt.plot(y, 'k-', alpha=0.4, color=color)
     plt.xlabel('input freq. $F_{in}$ (Hz)')
     plt.ylabel('output freq. $F_{out}$ (Hz)')
-    plt.title('%s input-output curve' % label)
+    plt.title('%s input-output curves' % label)
     plt.legend()
-    plt.show()
-    SquareDifference = compute_square_difference(res, res0)
-    min_index = np.unravel_index(np.argmin(SquareDifference), SquareDifference.shape)
-    best_RmS = res['RmSs'][min_index[0]]
-    best_RmD = res['RmDs'][min_index[1]]
-    best_Ri  = res['Ris'][min_index[2]]
-    print("  RmS =", best_RmS)
-    print("  RmD =", best_RmD)
-    print("  Ri  =", best_Ri)
+    plt.show()  
     return fig, ax
 
 # %%
 if True:
     excitability_scan_plot(label='PV', color='tab:red')
     excitability_scan_plot(label='SST', color='tab:orange')
+# %%
+def find_best_fit_params(res, res0):
+    """Return indices and values of parameters with the smallest residual."""
+    SD = compute_square_difference(res, res0)
+    """
+    best_idx = np.unravel_index(np.argmin(SD), SD.shape)  # (iRmS, iRmD, iRi)
+    iRmS, iRmD, iRi = best_idx
+    """
+
+    I, J, K = np.meshgrid(range(6), range(8), range(4), indexing='ij')
+    i0 = np.argsort(SD.flatten())[6]
+    best_idx = I.flatten()[i0], J.flatten()[i0], K.flatten()[i0]
+
+    best_val = SD[best_idx]
+    return best_idx, best_val
+
+def plot_best_fit_IO(label='PV', color='tab:red'):
+    res0 = np.load('data/excitability-params-scan-single-comp.npy', allow_pickle=True).item()
+    res = np.load(f'data/excitability-params-scan-two-comp-{label}.npy', allow_pickle=True).item()
+
+    # find best-fit parameter combination
+    (iRmS, iRmD, iRi), best_val = find_best_fit_params(res, res0)
+    print(f"Best params for {label}: RmS={res['RmSs'][iRmS]:.1f}, "
+          f"RmD={res['RmDs'][iRmD]:.1f}, Ri={res['Ris'][iRi]:.1f} MΩ "
+          f"(residual={best_val:.4f})")
+
+    # plot IO curves
+    fig, ax = plt.subplots(1, dpi=200)
+    ax.plot(res0['Fout'], 'ko', label='single-compartment')
+    ax.plot(res['Fouts'][iRmS, iRmD, iRi], '-', color=color, lw=2,
+            label=f'two-compartment (best fit)')
+
+    ax.set_xlabel('input freq. $F_{in}$ (Hz)')
+    ax.set_ylabel('output freq. $F_{out}$ (Hz)')
+    ax.set_title(f'{label} input-output curve\n')
+    ax.legend()
+    plt.show()
+    return fig, ax
+#plot_best_fit_IO(label='PV', color='tab:red')
+plot_best_fit_IO(label='SST', color='tab:orange')
+# %%
+label='SST'
+res0 = np.load('data/excitability-params-scan-single-comp.npy', allow_pickle=True).item()
+res = np.load(f'data/excitability-params-scan-two-comp-{label}.npy', allow_pickle=True).item()
+I, J, K = np.meshgrid(range(6), range(8), range(4), indexing='ij')
+
+i0 = np.argsort()
+SD = compute_square_difference(res, res0)
+# %%
