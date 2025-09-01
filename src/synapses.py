@@ -22,10 +22,10 @@ def get_Glutamatergic_eqs(params):
 def get_Gabaergic_eqs(params):
 
     INH_SYNAPSES_EQUATIONS =\
-            """dgDecayGABA/dt = -gDecayGABA/({tauDecayGABA}*ms) : 1 (clock-driven)
-               gGABA = ({qGABA}*nS)*(gDecayGABA) : siemens
-               gI_post = gGABA : siemens (summed)""".format(**params)
-    ON_INH_EVENT = 'gDecayGABA+= 1'
+            """dg{name}DecayGABA/dt = -g{name}DecayGABA/({tauDecayGABA}*ms) : 1 (clock-driven)
+               g{name}GABA = ({qGABA}*nS)*(g{name}DecayGABA) : siemens
+               G{name}_post = g{name}GABA : siemens (summed)""".format(**params)
+    ON_INH_EVENT = 'g{name}DecayGABA += 1'
 
     return INH_SYNAPSES_EQUATIONS, ON_INH_EVENT 
 
@@ -44,26 +44,28 @@ def get_syn_onevent_params(source_pop, target_pop, Model):
 
     if 'Exc' in source_pop:
 
-        P = {'name':afferent_pop+target_pop,
-             'qAMPA': Model['Q_'+afferent_pop+'_'+target_pop],
-             'qNMDA': 0.,
+        P = {'name':source_pop+target_pop,
+             'qAMPA': Model['Q_'+source_pop+'_'+target_pop],
              }
+        if 'NAR_'+target_pop in Model:
+            P['qNMDA'] = Model['NAR_'+target_pop]*\
+                    Model['Q_'+source_pop+'_'+target_pop]
+            print(target_pop, P['qNMDA'])
+        else:
+            P['qNMDA'] = 0.
+
         for k in ['tauDecayAMPA', 
                   'tauRiseNMDA', 'tauDecayNMDA', 
                   'cMg', 'etaMg', 'V0NMDA', 'Mg_NMDA']:
              P[k] = Model[k]
 
-        if 'qAMPA_%s_%s' % (source_pop, target_pop) in params:
-            P['qAMPA'] = params['qAMPA_%s_%s' % (source_pop, target_pop)]
-        elif 'qNMDA_%s_%s' % (source_pop, target_pop) in params:
-            P['qNMDA'] = params['qNMDA_%s_%s' % (source_pop, target_pop)]
         SYNAPSES_EQUATIONS, ON_EVENT = \
                         get_Glutamatergic_eqs(P)
 
     elif 'Inh' in source_pop:
 
-        P = {'name':afferent_pop+target_pop,
-             'qGABA': Model['Q_'+afferent_pop+'_'+target_pop],
+        P = {'name':source_pop+target_pop,
+             'qGABA': Model['Q_'+source_pop+'_'+target_pop],
              }
         for k in ['tauDecayGABA']:
              P[k] = Model[k]
