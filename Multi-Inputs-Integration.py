@@ -428,9 +428,10 @@ if True:
     get_depolarization_data(label='SST')
 #%%
 depol_at_threshold = find_nl_kick_level_scan(label=label, threshold=threshold)
-print("From scan:", depol_at_threshold[iRmS, iRmD, iRi])
+#print("From scan:", depol_at_threshold[iRmS, iRmD, iRi])
 
 kick = find_nl_kick_level(peak_expected, non_linearity, El, threshold)
 if kick is not None:
     iCond, _, _, depol = kick
     print("Manual depol at threshold:", depol[iCond])
+# %%

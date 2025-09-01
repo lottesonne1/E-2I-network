@@ -135,7 +135,7 @@ if True:
 #%%
 #plot parameters to residuals
 def compute_square_difference(res, res0):
-    SD = np.abs(res['Fouts'] - res0['Fout']).mean(axis=-1)
+    SD = (res['Fouts'] - res0['Fout']).mean(axis=-1)
     return SD/np.mean(res0['Fout'])
 
 def plot_full_parameter_grid(label='PV', last_n=7):
@@ -227,7 +227,8 @@ def find_best_fit_params(res, res0):
     """
 
     I, J, K = np.meshgrid(range(6), range(8), range(4), indexing='ij')
-    i0 = np.argsort(SD.flatten())[6]
+    SD[SD<=0] = np.inf
+    i0 = np.argsort(SD.flatten())[1]
     best_idx = I.flatten()[i0], J.flatten()[i0], K.flatten()[i0]
 
     best_val = SD[best_idx]
@@ -263,6 +264,6 @@ res0 = np.load('data/excitability-params-scan-single-comp.npy', allow_pickle=Tru
 res = np.load(f'data/excitability-params-scan-two-comp-{label}.npy', allow_pickle=True).item()
 I, J, K = np.meshgrid(range(6), range(8), range(4), indexing='ij')
 
-i0 = np.argsort()
 SD = compute_square_difference(res, res0)
+i0 = np.argsort(SD)
 # %%
