@@ -9,13 +9,13 @@ def get_Glutamatergic_eqs(params):
     params['nNMDA'] = double_exp_normalization(params['tauRiseNMDA'],
                                                params['tauDecayNMDA'])
     EXC_SYNAPSES_EQUATIONS =\
-        """dgDecayAMPA/dt = -gDecayAMPA/({tauDecayAMPA}*ms) : 1 (clock-driven)
-        dgRiseNMDA/dt = -gRiseNMDA/({tauRiseNMDA}*ms) : 1 (clock-driven)
-        dgDecayNMDA/dt = -gDecayNMDA/({tauDecayNMDA}*ms) : 1 (clock-driven)
-        gAMPA = ({qAMPA}*nS)*(gDecayAMPA) : siemens
-        gNMDA = ({qNMDA}*nS)*{nNMDA}*(gDecayNMDA-gRiseNMDA)/(1+{etaMg}*{cMg}*exp(-V_post/({V0NMDA}*mV))) : siemens
-        gE_post = gAMPA+gNMDA : siemens (summed)""".format(**params)
-    ON_EXC_EVENT = 'gDecayAMPA += 1; gDecayNMDA += 1; gRiseNMDA += 1'
+        """dg{name}DecayAMPA/dt = -g{name}DecayAMPA/({tauDecayAMPA}*ms) : 1 (clock-driven)
+        dg{name}RiseNMDA/dt = -g{name}RiseNMDA/({tauRiseNMDA}*ms) : 1 (clock-driven)
+        dg{name}DecayNMDA/dt = -g{name}DecayNMDA/({tauDecayNMDA}*ms) : 1 (clock-driven)
+        g{name}AMPA = ({qAMPA}*nS)*(g{name}DecayAMPA) : siemens
+        g{name}NMDA = ({qNMDA}*nS)*{nNMDA}*(g{name}DecayNMDA-g{name}RiseNMDA)/(1+{etaMg}*{cMg}*exp(-V_post/({V0NMDA}*mV))) : siemens
+        G{name}_post = g{name}AMPA+g{name}NMDA : siemens (summed)""".format(**params)
+    ON_EXC_EVENT = 'g{name}DecayAMPA += 1; g{name}DecayNMDA += 1; g{name}RiseNMDA += 1'
 
     return EXC_SYNAPSES_EQUATIONS, ON_EXC_EVENT
 
@@ -40,7 +40,7 @@ def get_synapses_eqs(params):
     return EXC_SYNAPSES_EQUATIONS, ON_EXC_EVENT,\
             INH_SYNAPSES_EQUATIONS, ON_INH_EVENT
 
-def get_syn_onevent_params(source_pop, target_pop, params):
+def get_syn_onevent_params(source_pop, target_pop, Model):
 
     P = params.copy()
     if 'Exc' in source_pop:

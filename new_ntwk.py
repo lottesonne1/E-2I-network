@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pylab as plt
 import itertools, scipy.special
 from scipy.ndimage.filters import gaussian_filter1d
+from src.synapses import get_Gabaergic_eqs, get_Glutamatergic_eqs,\
+                            get_syn_onevent_params
 
 #######################################################
 # A large dictionary storing all networks parameters
@@ -61,6 +63,15 @@ Model = {
     'DsInh_RmS':200., 'DsInh_RmD': 200., 'DsInh_Ri': 3.,  
     'DsInh_CmS':100., 'DsInh_CmD': 100., 
     ## ---------------------------------------------------------------------------------
+    'tauDecayAMPA':5,# [ms]
+    'tauDecayGABA':5,# [ms]
+    'tauRiseNMDA': 3,# [ms]
+    'tauDecayNMDA': 70,# [ms]
+    # -- MG-BLOCK PARAMS  -- #
+    'cMg': 1., # mM
+    'etaMg': 0.33, # 1/mM
+    'V0NMDA':1./0.08,# [mV]
+    'Mg_NMDA':1.,# mM
     # === afferent population waveform:
     'Faff1':4.,'Faff2':20.,'Faff3':8.,
     'DT':900., 'rise':50.,
@@ -111,8 +122,10 @@ def get_membrane_equation(neuron_params, synaptic_array,\
         # loop over each presynaptic element onto this target
         if synapse['pconn']>0:
             Gsyn = 'G'+synapse['name']
+            # eqs += """
+            # """+'d'+Gsyn+'/dt = -'+Gsyn+'*(1./(%(Tsyn)f*ms)) : siemens' % synapse
             eqs += """
-            """+'d'+Gsyn+'/dt = -'+Gsyn+'*(1./(%(Tsyn)f*ms)) : siemens' % synapse
+            """+Gsyn+' : siemens' 
     eqs += """
         I0 : amp """
 
@@ -237,6 +250,8 @@ def build_up_recurrent_connections(NTWK, SEED=1, verbose=False):
         
     for ii, jj in itertools.product(range(len(NTWK['POPS'])), range(len(NTWK['POPS']))):
         if (NTWK['M'][ii,jj]['pconn']>0) and (NTWK['M'][ii,jj]['Q']!=0):
+
+            """
             CONN[ii,jj] = brian2.Synapses(NTWK['POPS'][ii], NTWK['POPS'][jj], model='w:siemens',\
                                on_pre='G'+NTWK['M'][ii,jj]['name']+'_post+=w')
             # N.B. the following brian2 settings:
@@ -256,6 +271,7 @@ def build_up_recurrent_connections(NTWK, SEED=1, verbose=False):
             CONN[ii,jj].connect(i=i_rdms, j=j_fixed) 
             CONN[ii,jj].w = NTWK['M'][ii,jj]['Q']*brian2.nS
             CONN2.append(CONN[ii,jj])
+            """
 
     NTWK['REC_SYNAPSES'] = CONN2
 
@@ -326,12 +342,28 @@ def construct_feedforward_input(NTWK,
         indices, times = set_spikes_from_time_varying_rate(\
                             t, rate_array,\
                             NTWK['POPS'][ipop].N, Nsyn, SEED=(SEED+2)**2%100)
-        spikes = brian2.SpikeGeneratorGroup(NTWK['POPS'][ipop].N, indices, times)
-        pre_increment = 'G'+afferent_pop+target_pop+' += w'
-        synapse = brian2.Synapses(spikes, NTWK['POPS'][ipop], on_pre=pre_increment,\
-                                        model='w:siemens')
+
+        spikes = brian2.SpikeGeneratorGroup(NTWK['POPS'][ipop].N, 
+                                            indices, times)
+
+        P = {'name':afferent_pop+target_pop,
+             'qAMPA': Model['Q_'+afferent_pop+'_'+target_pop],
+             'qNMDA': 0.,
+             }
+        for k in ['tauDecayAMPA', 
+                  'tauDecayGABA', 
+                  'tauRiseNMDA', 'tauDecayNMDA', 
+                  'cMg', 'etaMg', 'V0NMDA', 'Mg_NMDA']:
+             P[k] = Model[k]
+
+        SYNAPSES_EQUATIONS, ON_EVENT = get_Glutamatergic_eqs(P)
+
+        synapse = brian2.Synapses(spikes, NTWK['POPS'][ipop], 
+                            model=SYNAPSES_EQUATIONS.format(**P),
+                            on_pre=ON_EVENT.format(**P),
+                            method='exponential_euler')
+
         synapse.connect('i==j')
-        synapse.w = Qsyn*brian2.nS
 
         NTWK['PRE_SPIKES'].append(spikes)
         NTWK['PRE_SYNAPSES'].append(synapse)
@@ -421,10 +453,7 @@ if __name__=='__main__':
     
     import argparse
     parser=argparse.ArgumentParser(description="""
-    Demo file for the paper: 
-    "The Spectrum of Asynchronous Dynamics in Spiking Networks: A Theory for the Diversity of Non-Rhythmic Waking States"
-    Zerlaut et al., 2018
-    Reproducing Figure 3
+
     """,formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("-v", "--verbose", help="print stuff",
                         action="store_true")
