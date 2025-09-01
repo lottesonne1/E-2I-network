@@ -42,8 +42,17 @@ def get_synapses_eqs(params):
 
 def get_syn_onevent_params(source_pop, target_pop, Model):
 
-    P = params.copy()
     if 'Exc' in source_pop:
+
+        P = {'name':afferent_pop+target_pop,
+             'qAMPA': Model['Q_'+afferent_pop+'_'+target_pop],
+             'qNMDA': 0.,
+             }
+        for k in ['tauDecayAMPA', 
+                  'tauRiseNMDA', 'tauDecayNMDA', 
+                  'cMg', 'etaMg', 'V0NMDA', 'Mg_NMDA']:
+             P[k] = Model[k]
+
         if 'qAMPA_%s_%s' % (source_pop, target_pop) in params:
             P['qAMPA'] = params['qAMPA_%s_%s' % (source_pop, target_pop)]
         elif 'qNMDA_%s_%s' % (source_pop, target_pop) in params:
@@ -52,6 +61,13 @@ def get_syn_onevent_params(source_pop, target_pop, Model):
                         get_Glutamatergic_eqs(P)
 
     elif 'Inh' in source_pop:
+
+        P = {'name':afferent_pop+target_pop,
+             'qGABA': Model['Q_'+afferent_pop+'_'+target_pop],
+             }
+        for k in ['tauDecayGABA']:
+             P[k] = Model[k]
+
         SYNAPSES_EQUATIONS, ON_EVENT =\
                         get_Gabaergic_eqs(P)
         

@@ -346,17 +346,9 @@ def construct_feedforward_input(NTWK,
         spikes = brian2.SpikeGeneratorGroup(NTWK['POPS'][ipop].N, 
                                             indices, times)
 
-        P = {'name':afferent_pop+target_pop,
-             'qAMPA': Model['Q_'+afferent_pop+'_'+target_pop],
-             'qNMDA': 0.,
-             }
-        for k in ['tauDecayAMPA', 
-                  'tauDecayGABA', 
-                  'tauRiseNMDA', 'tauDecayNMDA', 
-                  'cMg', 'etaMg', 'V0NMDA', 'Mg_NMDA']:
-             P[k] = Model[k]
 
-        SYNAPSES_EQUATIONS, ON_EVENT = get_Glutamatergic_eqs(P)
+        SYNAPSES_EQUATIONS, ON_EVENT, P =\
+                get_syn_onevent_params(afferent_pop, target_pop, Model)
 
         synapse = brian2.Synapses(spikes, NTWK['POPS'][ipop], 
                             model=SYNAPSES_EQUATIONS.format(**P),
