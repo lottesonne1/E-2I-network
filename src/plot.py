@@ -1,5 +1,6 @@
 import matplotlib.pylab as plt
 import numpy as np
+from scipy.ndimage import gaussian_filter1d
 
 def plot_with_stim(resp,
                    tlim=None,
@@ -51,9 +52,6 @@ def plot_with_stim(resp,
         ax.axis('off')
         ax.set_xlim(tlim)
 
-        
-
-
     return fig, AX
 
 def plot_Vm(V, params, 
@@ -78,3 +76,68 @@ def plot_Vm(V, params,
                    Vm, 
                    linestyle,
                    color=color)
+
+def plot_ntwk(NTWK,
+              log=True,
+              colors = ['tab:green', 'tab:red',
+                        'tab:orange', 'tab:purple']):
+
+    fig = plt.figure(figsize=(9, 7))
+    plt.subplots_adjust()
+
+    grid, AX = (11,1), []
+    # afferent stimulation
+    AX.append(plt.subplot2grid(grid, (0,0)))
+    AX[-1].plot(NTWK['t'], NTWK['faff_waveform'], 'k-')
+    AX[-1].set_xticklabels([])
+    AX[-1].set_ylabel(r'$\nu_a$ (Hz)')
+
+    # populations activity (instant. firing rates)
+    AX.append(plt.subplot2grid(grid, (1, 0), rowspan=2))
+    for i, pop in enumerate(NTWK['POPS']):
+        rate = NTWK['rates'][i]
+        rate = gaussian_filter1d(rate, int(20./0.1)) # smoothing
+        rate[rate<0.01] = 0.01
+        if log:
+            AX[-1].semilogy(NTWK['t'], rate, 
+                            '-', color=colors[i], label=pop)
+        else:
+            AX[-1].plot(NTWK['t'], rate, 
+                        '-', color=colors[i], label=pop)
+        AX[-1].annotate(i*'\n'+' '+pop, (0,.95), va='top',
+                        color=colors[i], 
+                        xycoords='axes fraction')
+    AX[-1].set_xticklabels([])
+    AX[-1].set_ylabel('pop act. (Hz)')
+
+    # raster plot
+    AX.append(plt.subplot2grid(grid, (3, 0), rowspan=2))
+    n=0
+    for i, pop in enumerate(NTWK['POPS']):
+        AX[-1].plot(NTWK['raster'][i]['t'],
+                    NTWK['raster'][i]['i']+n, 
+                    '.', color=colors[i], ms=1)
+        n+= NTWK['Model']['N_%s' % pop]
+    AX[-1].set_ylabel('neuron ID')
+
+    # sample Vm traces 
+    AX.append(plt.subplot2grid(grid, (5, 0), rowspan=6))
+
+    N = [3,1,1,1] # number displayed per population
+    j=0 # index to shift the Vm trace
+    for i, pop in enumerate(NTWK['POPS']):
+        for n in range(N[i]):
+            Vm = NTWK['VMs'][i][n]
+            ispikes = np.argwhere(\
+                  (Vm[1:]==NTWK['Model']['%s_Vreset' % pop]) &
+                    (Vm[:-1]>NTWK['Model']['%s_Vreset' % pop]))
+            Vm[ispikes] = -10
+            AX[-1].plot(NTWK['t'], NTWK['VMs'][i][n]-70*j, 
+                    '-', color=colors[i])
+            j+=1
+    AX[-1].plot([0.09, 0.09], [-60, -40], 'k-')
+    AX[-1].annotate(' 20mV', (0.1, -50))
+    AX[-1].set_yticks([])
+    AX[-1].set_ylabel('sample Vm traces')
+    AX[-1].set_xlabel('time (ms)')
+    return fig

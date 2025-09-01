@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pylab as plt
 import itertools, scipy.special
 from scipy.ndimage.filters import gaussian_filter1d
-from synapses import get_syn_onevent_params
+from .synapses import get_syn_onevent_params
 
 #######################################################
 # A large dictionary storing all networks parameters
@@ -451,6 +451,7 @@ def save(NTWK, REC_POPS,
          filename='network.data.npy'):
 
     save = {'POPS':REC_POPS,
+            'raster':[],
             'rates':[],
             'faff_waveform':NTWK['faff_waveform'],
             't':NTWK['t_array'],
@@ -462,6 +463,8 @@ def save(NTWK, REC_POPS,
         save['rates'].append(np.array(NTWK['POP_ACT'][i].rate/brian2.Hz))
         for v in NTWK['VMS'][i].V:
             save['VMs'][i].append(np.array(v/brian2.mV))
+        save['raster'].append({'t':np.array(NTWK['RASTER'][i].t/brian2.ms),
+                       'i':np.array(NTWK['RASTER'][i].i, dtype=int)})
 
     np.save(filename, save) 
 
