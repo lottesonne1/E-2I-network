@@ -33,7 +33,7 @@ def get_Gabaergic_eqs(params):
 def get_synapses_eqs(params):
 
     EXC_SYNAPSES_EQUATIONS, ON_EXC_EVENT = \
-        get_Glutamtatergic_eqs(params)
+        get_Glutamatergic_eqs(params)
     INH_SYNAPSES_EQUATIONS, ON_INH_EVENT = \
         get_Gabaergic_eqs(params)
 

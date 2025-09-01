@@ -135,7 +135,9 @@ plot_peaks(label='SST', color='tab:orange')
 threshold = 25
 label = 'PV' 
 
-def find_nl_kick_level(peak_expected, non_linearity, 
+def find_nl_kick_level(peak_expected,
+                       non_linearity, 
+                       El,
                        threshold=threshold, label='SST'):
     depol = np.array(peak_expected) + El
     above = np.where(np.abs(non_linearity) > threshold)[0]
@@ -283,13 +285,13 @@ def find_nl_kick_level_scan(label='SST', threshold=25):
         peak_actual = Peak_Actual[iRmS, iRmD, iRi, :]
         non_linearity = (peak_actual - peak_expected) / peak_expected * 100
 
-        kick = find_nl_kick_level(peak_expected, El, non_linearity, threshold)
+        kick = find_nl_kick_level(peak_expected, non_linearity, El, threshold)
         if kick is not None:
             iCond, _, _, depol = kick
             depol_at_threshold[iRmS, iRmD, iRi] = depol[iCond]
 
     return depol_at_threshold
-depol_at_threshold = find_nl_kick_level_scan(label=label, threshold=25)
+depol_at_threshold = find_nl_kick_level_scan(label=label, threshold=threshold)
 
 # %%
 #Plot parameter scan 10
@@ -330,7 +332,7 @@ cb = fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap),
                   label="Depolarization (mV)")
 
 #%%
-#plot parameters for n synapses 
+#plot NL grid parameter scan n synapses 
 def plot_full_parameter_grid(label='PV', last_n=7):
     res = np.load('data/nonlinearity-params-scan-two-comp-%s.npy' % label, allow_pickle=True).item()
     Nonlinearity = (res["Peak_Actual"] - res["Peak_Expected"]) / res["Peak_Expected"] * 100
@@ -338,6 +340,8 @@ def plot_full_parameter_grid(label='PV', last_n=7):
     Nsyn = Nonlinearity.shape[-1]
     n_indices = np.arange(max(0, Nsyn-last_n), Nsyn)
     cmap = plt.cm.RdBu
+    depol_at_threshold = find_nl_kick_level_scan(label=label, threshold=25)
+    min_index = np.unravel_index(np.nanargmin(depol_at_threshold), depol_at_threshold.shape)
 
     fig, AX = plt.subplots(len(n_indices), len(Ris),
                            figsize=(2.5*len(Ris), 2*len(n_indices)),
@@ -372,9 +376,9 @@ def plot_full_parameter_grid(label='PV', last_n=7):
 
     cbar_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
     fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(vmin=vmin, vmax=vmax), cmap=cmap),
-                 cax=cbar_ax, orientation='vertical', label="Nonlinearity (%)")
+                 cax=cbar_ax, orientation='vertical', label="Non-linearity (%)")
 
-    plt.suptitle('%s: parameter scan' % label, y=0.99)
+    plt.suptitle('%s non-linearity parameter scan' % label, fontsize=30, y=0.99)
     plt.tight_layout(rect=[0,0,0.9,0.97])
     plt.show()
     return fig, AX
@@ -386,104 +390,47 @@ if True:
     plot_full_parameter_grid(label='SST')
 
 #%%
-# Input resistance 
-from src.cell import get_neuron_group 
-def measure_input_resistance_steps(params,
-                                   model="single-compartment",
-                                   steps_pA=np.linspace(-50, 50, 11), 
-                                   step_start=0.2,  
-                                   step_dur=0.4,     
-                                   settle=0.1      
-                                   ):
+# plot depolarization
+def get_depolarization_data(label='PV', threshold=25):
+    res = np.load('data/nonlinearity-params-scan-two-comp-%s.npy' % label, allow_pickle=True).item()
+    depol_at_threshold = find_nl_kick_level_scan(label=label, threshold=threshold)
+    RmSs, RmDs, Ris = res['RmSs'], res['RmDs'], res['Ris']
 
-    defaultclock.dt = params['dt'] * second
-    net = Network(collect())
-    cell = get_neuron_group(params, model=model)
-    net.add(cell)
+    fig, AX = plt.subplots(1, len(Ris), figsize=(3*len(Ris)+1.5, 3), dpi=200)
+    if len(Ris) == 1:
+        AX = [AX]
+    vmin = np.nanmin(depol_at_threshold)
+    vmax = np.nanmax(depol_at_threshold)
+    for i, Ri in enumerate(Ris):
+        im = AX[i].imshow(depol_at_threshold[:, :, i], 
+                        origin='lower', aspect='auto',
+                        extent=[RmDs[0], RmDs[-1], RmSs[0], RmSs[-1]],
+                        cmap='viridis', vmin=vmin, vmax=vmax)
+        AX[i].set_title(f"Ri = {Ri:.1f} MΩ")
+        AX[i].set_xlabel("RmD (MΩ)")
+        if i == 0:
+            AX[i].set_ylabel("RmS (MΩ)")
 
-    if model == "two-compartments":
-        mon = StateMonitor(cell, ['Vs', 'V', 'I0'], record=0)
-    else:
-        mon = StateMonitor(cell, ['V', 'I0'], record=0)
-    net.add(mon)
+    cbar_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
+    cbar = fig.colorbar(im, cax=cbar_ax)
+    cbar.set_label("Depolarization (mV)")
 
-    if model == "two-compartments":
-        cell.Vs = params['El'] * mV
-        cell.V  = params['El'] * mV
-    else:
-        cell.V  = params['El'] * mV
-    cell.I0 = 0 * pA
+    fig.suptitle('%s depolarization across parameter scan' % label, fontsize=18)
+    plt.tight_layout(rect=[0, 0, 0.9, 0.95])
+    plt.show()
+    return fig, AX
 
-    pre_dur   = step_start
-    between   = 0.15 
-    per_step_total = step_dur + between
-    net.run(pre_dur * second)
-    for I in steps_pA:
-        cell.I0 = I * pA
-        net.run(step_dur * second)
-        cell.I0 = 0 * pA
-        net.run(between * second)
-    t = np.asarray(mon.t / second)
-
-    if model == "two-compartments":
-        Vs = np.asarray(mon.Vs[0] / mV)
-        Vd = np.asarray(mon.V[0]  / mV)
-        soma_trace = Vs
-    else:
-        V  = np.asarray(mon.V[0]  / mV)
-        soma_trace = V
-        Vd = None
-
-    dV_ss = []
-    step_onsets = pre_dur + np.arange(len(steps_pA)) * per_step_total
-    for onset in step_onsets:
-        start = onset + (step_dur - settle)  
-        end   = onset + step_dur
-        mask  = (t >= start) & (t <= end)
-        Vmean = np.mean(soma_trace[mask])
-        dV_ss.append(Vmean - params['El'])
-
-    dV_ss = np.asarray(dV_ss)  
-    slope, intercept = np.polyfit(steps_pA, dV_ss, 1)  
-    Rin_MOhm = slope  
-
-    return steps_pA, dV_ss, Rin_MOhm, t, soma_trace, Vd
 #%%
-# Plot input resistance
-
-
-
-def plot_input_resistance(params, model="two-compartments", steps, dV, Rin, t, Vs, Vd):
-    steps, dV, Rin, t, Vs, Vd = measure_input_resistance_steps(
-    params, model=model,
-    steps_pA=np.linspace(-50, 50, 11),
-    step_start=0.2, step_dur=0.4, settle=0.1
-    )
-    print(f"Estimated Rin (soma) = {Rin:.1f} MΩ")
-    # IV curve
-    plt.figure(dpi=200)
-    plt.plot(steps, dV, 'o-')
-    plt.axhline(0, ls=':', c='k')
-    plt.axvline(0, ls=':', c='k')
-    plt.xlabel('Injected current (pA)')
-    plt.ylabel('Steady-state ΔV_soma (mV)')
-    plt.title('I–V curve (Rin = %.1f MΩ)' % Rin)
-    plt.tight_layout()
-    plt.show()
-
-# Voltage trace (soma ± dendrite)
-    plt.figure(dpi=200)
-    plt.plot(t, Vs, label='Vs (soma)')
-    if Vd is not None:
-        plt.plot(t, Vd, label='Vd (dend)')
-        plt.axhline(params['El'], ls='--', c='k', lw=0.8, label='El')
-    plt.xlabel('Time (s)')
-    plt.ylabel('V (mV)')
-    plt.legend(frameon=False)
-    plt.tight_layout()
-    plt.show()
-
-# %%
 if True:
-   plot_input_resistance(steps, dV, Rin, t, Vs, Vd)
-   plot_input_resistance(params, model, steps, dV, Rin, t, Vs, Vd, model="single-compartment")
+    get_depolarization_data(label='PV')
+    get_depolarization_data(label='SST')
+
+
+#%%
+depol_at_threshold = find_nl_kick_level_scan(label=label, threshold=threshold)
+print("From scan:", depol_at_threshold[iRmS, iRmD, iRi])
+
+kick = find_nl_kick_level(peak_expected, non_linearity, El, threshold)
+if kick is not None:
+    iCond, _, _, depol = kick
+    print("Manual depol at threshold:", depol[iCond])
