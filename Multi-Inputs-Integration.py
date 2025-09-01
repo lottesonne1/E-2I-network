@@ -13,8 +13,8 @@ import matplotlib as mpl
 
 
 # by default:
-label = 'PV'
-NMDA_AMPA_ratio = 0
+label = 'SST'
+NMDA_AMPA_ratio = 2.7
 
 # %%
 # Loop for N events 
@@ -44,6 +44,11 @@ def simulate_increasing_simultaneous_events(params,
         nevoked_list.append(evoked_n)
 
     return nevoked_list
+
+params['RmS'] = 40.
+params['RmD'] = 300.
+params['Ri'] = 50
+params['Vtresh'] = 100
 nevoked_list = simulate_increasing_simultaneous_events(params,
                                                       model='two-compartments',
                                                       NMDA_AMPA_ratio=NMDA_AMPA_ratio,

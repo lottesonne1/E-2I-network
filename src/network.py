@@ -410,7 +410,7 @@ def collect_and_run(NTWK, verbose=False):
     net.run(NTWK['tstop']*brian2.ms)
     return net
 
-def run_3pop_ntwk_model(Model,
+def run_3pop_ntwk_model(Model, REC_POPS,
                         filename='data/sas.h5',
                         with_Vm=4,
                         verbose=False,
@@ -418,7 +418,7 @@ def run_3pop_ntwk_model(Model,
 
     print('initializing simulation [...]')
     NTWK = build_populations(Model,
-                             ['PyrExc', 'PvInh', 'SstInh', 'DsInh'],
+                             REC_POPS,
                              AFFERENT_POPULATIONS=['AffExc'],
                              with_Vm=with_Vm,
                              verbose=verbose)
@@ -431,7 +431,7 @@ def run_3pop_ntwk_model(Model,
     NTWK['t_array'] = np.arange(int(Model['tstop']/Model['dt']))*Model['dt']
     NTWK['faff_waveform'] = waveform(NTWK['t_array'], Model)
 
-    for i, tpop in enumerate(['PyrExc', 'PvInh', 'SstInh', 'DsInh']): # both on excitation and inhibition
+    for i, tpop in enumerate(REC_POPS):
         construct_feedforward_input(NTWK, tpop, 'AffExc',
                                     NTWK['t_array'],
                                     NTWK['faff_waveform'],
@@ -447,6 +447,23 @@ def run_3pop_ntwk_model(Model,
 
     return NTWK
     
+def save(NTWK, REC_POPS,
+         filename='network.data.npy'):
+
+    save = {'POPS':REC_POPS,
+            'rates':[],
+            'faff_waveform':NTWK['faff_waveform'],
+            't':NTWK['t_array'],
+            'Model':Model}
+
+    save['VMs'] = [[] for i in range(len(REC_POPS))]
+
+    for i, pop in enumerate(REC_POPS):
+        save['rates'].append(np.array(NTWK['POP_ACT'][i].rate/brian2.Hz))
+        for v in NTWK['VMS'][i].V:
+            save['VMs'][i].append(np.array(v/brian2.mV))
+
+    np.save(filename, save) 
 
 if __name__=='__main__':
     
@@ -461,55 +478,9 @@ if __name__=='__main__':
 
     REC_POPS =  ['PyrExc', 'PvInh', 'SstInh', 'DsInh']
 
-    NTWK = run_3pop_ntwk_model(Model,
+    NTWK = run_3pop_ntwk_model(Model, REC_POPS,
                                with_Vm=3,
                                verbose=args.verbose)
 
-    ### SAVE ###
-    save = {'POPS':REC_POPS,
-            'rates':[],
-            'faff_waveform':NTWK['faff_waveform'],
-            't':NTWK['t_array'],
-            'Model':Model}
-
-    save['VMs'] = [[] for i in range(len(REC_POPS))]
-
-    for i, pop in enumerate(REC_POPS):
-        save['rates'].append(np.array(NTWK['POP_ACT'][i].rate/brian2.Hz))
-        for v in NTWK['VMS'][i].V:
-            save['VMs'][i].append(np.array(v/brian2.mV))
-
-    np.save('network.data.npy', save)
-    
-    """
-    ### PLOT ###
-    fig = plt.figure(figsize=(7,5.5))
-    plt.subplots_adjust()
-    # afferent stimulation
-    ax1 = plt.subplot2grid((6,1), (0,0))
-    ax1.plot(NTWK['t_array'], NTWK['faff_waveform'], 'k-')
-    ax1.set_xticks([]);ax1.set_ylabel(r'$\nu_a$ (Hz)')
-    # populations activity (instant. firing rates)
-    ax2 = plt.subplot2grid((6,1), (1, 0), rowspan=2)
-    COLORS = ['tab:green', 'tab:red', 'tab:orange', 'tab:purple']
-    for i, pop in enumerate():
-        rate = NTWK['POP_ACT'][i].rate/brian2.Hz
-        rate = gaussian_filter1d(rate, int(20./0.1)) # smoothing
-        rate[rate<0.01] = 0.01
-        ax2.semilogy(NTWK['t_array'], rate, '-', color=COLORS[i], label=pop)
-    ax2.legend(frameon=False)
-    ax2.set_xticks([]);ax2.set_ylabel('pop act. (Hz)')
-    # sample Vm traces 
-    ax3 = plt.subplot2grid((6,1), (3, 0), rowspan=3)
-    N = [3,1,1,1] # number displayed per population
-    j=0 # index to shift the Vm trace
-    for i, pop in enumerate(['PyrExc', 'PvInh', 'SstInh', 'DsInh']):
-        for n in range(N[i]):
-            ax3.plot(NTWK['t_array'], NTWK['VMS'][i].V[n]/brian2.mV-20*j, '-', color=COLORS[i])
-            j+=1
-    ax3.plot([0.09, 0.09], [-60, -50], 'k-')
-    ax3.annotate('10mV', (0.1, -70))
-    ax3.set_yticks([]);ax3.set_ylabel('sample Vm traces')
-    ax3.set_xlabel('time (ms)')
-    plt.show()
-    """
+ 
+    save(NTWK, REC_POPS) 

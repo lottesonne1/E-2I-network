@@ -50,7 +50,6 @@ def get_syn_onevent_params(source_pop, target_pop, Model):
         if 'NAR_'+target_pop in Model:
             P['qNMDA'] = Model['NAR_'+target_pop]*\
                     Model['Q_'+source_pop+'_'+target_pop]
-            print(target_pop, P['qNMDA'])
         else:
             P['qNMDA'] = 0.
 

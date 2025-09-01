@@ -62,6 +62,7 @@ def build_freq_scan(F_exc, params,
                                     label=label,
                                     model=model,
                                     tstop=np.clip(1/f, 5, 100))
+        fig, AX = plot_with_stim(resp, figsize=(10,3))
         # calculate firing response:
         cond = (resp['spikes']>tmin)
         F_out.append(len(resp['spikes'][cond])/\
@@ -69,10 +70,15 @@ def build_freq_scan(F_exc, params,
     return np.array(F_out)
 
 # %%
-F_exc = np.logspace(np.log10(0.1), np.log10(8), 10)
-F_out = build_freq_scan(F_exc, params)
+params['RmS'] = 40.
+params['RmD'] = 300.
+params['Ri'] = 50
+params['Vtresh'] = -63.
 
-# %%
+F_exc = np.logspace(np.log10(0.1), np.log10(8), 4)
+F_out = build_freq_scan(F_exc, params,
+                        model='two-compartments')
+
 def plot_freq_scan(F_exc, F_out,
                    color='tab:grey'):
     fig, ax = plt.subplots(1, figsize=(3,2), dpi=200) 
